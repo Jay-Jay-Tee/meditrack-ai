@@ -1,0 +1,5 @@
+flask
+qdrant-client
+qdrant-client[fastembed]
+numpy
+google-generativeai
