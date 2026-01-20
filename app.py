@@ -12,13 +12,14 @@ from qdrant_client.models import PayloadSchemaType
 import numpy as np
 from datetime import datetime
 from google import genai
+import os
 
 
 app = Flask(__name__)
 
 qdrant_client = QdrantClient(
-    url="https://5d606d1a-e79e-4ea4-b9e0-4619e8d5f0c2.us-east4-0.gcp.cloud.qdrant.io:6333",
-    api_key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIn0.ynU8qmDmY8_NsxChqp_SzZvrfU9VEyZ1hotwqXuJrTA"
+    url="SECRET_URL",
+    api_key="SECRET_Q_KEY"
 )
 
 @app.route("/")
@@ -354,7 +355,7 @@ Now write a short, neutral explanation of how the content changed over time.
 """
 
 def ai_explain(prompt: str):
-    client = genai.Client(api_key="AIzaSyAkixXheA9bAsjgbvKZ7MUYUyh5HOtyb7c")
+    client = genai.Client(api_key="SECRET_AI_KEY")
     response = client.models.generate_content(
         model="gemini-3-flash-preview",
         contents=prompt
