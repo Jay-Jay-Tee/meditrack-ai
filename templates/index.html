@@ -15,6 +15,41 @@
       🩺 Medical Timeline AI
     </h1>
 
+    <hr class="my-6">
+
+<h2 class="text-lg font-semibold mb-2">➕ Add Medical Event</h2>
+
+<input id="ingestPatientId"
+  class="w-full p-2 border rounded mb-2"
+  placeholder="Patient ID (e.g. p1)">
+
+<input id="patientName"
+  class="w-full p-2 border rounded mb-2"
+  placeholder="Patient Name (e.g. John Doe)">
+
+<input id="doctorName"
+  class="w-full p-2 border rounded mb-2"
+  placeholder="Doctor Name (optional)">
+
+<select id="eventType"
+  class="w-full p-2 border rounded mb-2">
+  <option value="note">General Note</option>
+  <option value="blood_test">Blood Test</option>
+  <option value="medication">Medication</option>
+</select>
+
+<textarea id="content"
+  class="w-full p-2 border rounded mb-2"
+  placeholder="Enter details (symptoms / test values / meds taken)">
+</textarea>
+
+
+<button onclick="ingestEvent()"
+  class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 mb-6">
+  Add Event
+</button>
+
+
     <label class="block mb-2 font-medium">Patient ID</label>
     <input id="patientId" class="w-full p-2 border rounded mb-4" placeholder="e.g. p1">
 
@@ -25,6 +60,12 @@
       class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
       Analyze
     </button>
+
+    <button onclick="runTimelineSummary(this)"
+    class="w-full mt-2 bg-purple-600 text-white py-2 rounded hover:bg-purple-700">
+    Summarize Full Timeline
+    </button>
+
 
     <div id="output" class="mt-6 text-sm whitespace-pre-wrap"></div>
   </div>

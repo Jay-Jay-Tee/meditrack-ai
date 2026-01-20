@@ -41,49 +41,6 @@ def qdrant_test():
 COLLECTION_NAME = "medical_events"
 VECTOR_DIM = 384
 
-@app.route("/timeline-summary", methods=["POST"])
-def timeline_summary():
-    data = request.json
-
-    points = search_events(
-        query_text=data["query"],
-        patient_id=data["patient_id"],
-        limit=10
-    )
-
-    if len(points) == 0:
-        return jsonify({"error": "No events found"})
-
-    timeline = build_patient_timeline(points)
-
-    prompt = f"""
-You are a medical record summarization assistant.
-
-Rules:
-- Do NOT diagnose
-- Do NOT suggest treatment
-- Only summarize what is explicitly stated
-- Mention progression or stability if present
-- Reference time order
-
-Patient timeline:
-"""
-
-    for event in timeline:
-        prompt += f"""
-[{event['timestamp']}] ({event['event_type']}):
-{event['content']}
-"""
-
-    prompt += "\nWrite a concise summary of how the patient's condition evolved."
-
-    explanation = ai_explain(prompt)
-
-    return jsonify({
-        "timeline": timeline,
-        "summary": explanation
-    })
-
 """@app.route("/setup-collection")
 def setup_collection():
     collections = qdrant_client.get_collections()
@@ -146,8 +103,6 @@ def store_event_in_qdrant(event: MedicalEvent, vector: list[float]):
                 vector=vector,
                 payload={
                     "patient_id": event.patient_id,
-                    "patient_name": data.get("patient_name", "Unknown"),
-                    "doctor_name": data.get("doctor_name", "Self"),
                     "timestamp": event.timestamp,
                     "event_type": event.event_type,
                     "modality": event.modality,
@@ -167,28 +122,10 @@ def ingest():
     event_type=data["event_type"],
     timestamp=data.get("timestamp") 
 )
-    
+
+
     vector = list(embedding_model.embed(event.content))[0].tolist()
-
-    qdrant_client.upsert(
-    collection_name=COLLECTION_NAME,
-    points=[
-        PointStruct(
-            id=event.event_id,
-            vector=vector,
-            payload={
-                "patient_id": event.patient_id,
-                "patient_name": data.get("patient_name", "Unknown"),
-                "doctor_name": data.get("doctor_name", "Self"),
-                "timestamp": event.timestamp,
-                "event_type": event.event_type,
-                "modality": "text",
-                "content": event.content
-            }
-        )
-    ]
-)
-
+    store_event_in_qdrant(event, vector)
 
     return jsonify({
         "status": "stored",
@@ -258,18 +195,6 @@ def sort_points_by_time(points):
         points,
         key=lambda p: datetime.fromisoformat(p.payload["timestamp"])
     )
-def build_patient_timeline(points):
-    ordered = sort_points_by_time(points)
-    timeline = []
-
-    for p in ordered:
-        timeline.append({
-            "timestamp": p.payload["timestamp"],
-            "event_type": p.payload["event_type"],
-            "content": p.payload["content"]
-        })
-
-    return timeline
 
 def compute_difference(points):
     if len(points) < 2:
