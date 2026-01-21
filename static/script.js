@@ -47,7 +47,7 @@ async function runTimelineSummary(btn) {
   }
 
   if (!patientId) {
-    output.innerText = "❌ Please enter Patient ID (Ingest or Analyze section)";
+    output.innerHTML = '<p class="text-red-600">❌ Please enter Patient ID (Ingest or Analyze section)</p>';
     cleanup();
     return;
   }
@@ -59,10 +59,14 @@ async function runTimelineSummary(btn) {
       body: JSON.stringify({ patient_id: patientId })
     });
 
+    if (!res.ok) {
+      throw new Error(`Server error: ${res.status}`);
+    }
+
     const data = await res.json();
 
     if (data.error) {
-      output.innerText = "❌ " + data.error;
+      output.innerHTML = `<p class="text-red-600">❌ ${escapeHtml(data.error)}</p>`;
       cleanup();
       return;
     }
@@ -73,7 +77,6 @@ async function runTimelineSummary(btn) {
       quality.label === "Rich" ? "text-green-700" :
       quality.label === "Moderate" ? "text-yellow-700" :
       "text-red-700";
-
 
     /* ---------- Build Table ---------- */
     let tableHTML = `
@@ -92,9 +95,9 @@ async function runTimelineSummary(btn) {
     for (const row of data.timeline) {
       tableHTML += `
         <tr class="hover:bg-gray-50">
-          <td class="border px-3 py-2">${utcToLocal(row.timestamp)}</td>
-          <td class="border px-3 py-2">${row.event_type}</td>
-          <td class="border px-3 py-2">${row.content}</td>
+          <td class="border px-3 py-2">${escapeHtml(utcToLocal(row.timestamp))}</td>
+          <td class="border px-3 py-2">${escapeHtml(row.event_type)}</td>
+          <td class="border px-3 py-2">${escapeHtml(row.content)}</td>
         </tr>
       `;
     }
@@ -117,26 +120,26 @@ async function runTimelineSummary(btn) {
       <hr class="my-4">
 
       <h3 class="font-semibold mb-1">🧠 AI Patient Overview</h3>
-      <p class="mb-2">${summaryText}</p>
+      <p class="mb-2 whitespace-pre-wrap">${escapeHtml(summaryText)}</p>
 
       <p class="text-sm text-gray-600">
         Semantic Shift: <strong>${data.semantic_shift}</strong>
       </p>
 
-            <div class="mb-3 p-2 border rounded bg-gray-50">
+      <div class="mb-3 p-2 border rounded bg-gray-50">
         <span class="font-semibold">Data Quality:</span>
         <span class="${qualityColor} font-bold">
-          ${quality.label}
+          ${escapeHtml(quality.label)}
         </span>
         <p class="text-sm text-gray-600">
-          ${quality.description}
+          ${escapeHtml(quality.description)}
         </p>
       </div>
-
     `;
 
-  } catch {
-    output.innerText = "❌ Failed to summarize timeline";
+  } catch (err) {
+    output.innerHTML = `<p class="text-red-600">❌ Failed to summarize timeline: ${escapeHtml(err.message)}</p>`;
+    console.error('Timeline summary error:', err);
   }
 
   cleanup();
@@ -151,6 +154,7 @@ async function ingestEvent() {
   ingestInProgress = true;
 
   const button = event.target;
+  const originalText = button.innerText;
   button.disabled = true;
   button.innerText = "⏳ Adding...";
 
@@ -165,8 +169,8 @@ async function ingestEvent() {
   const safeDoctorName = doctorName || "Self";
 
   if (!patientId || !eventType || !content) {
-    alert("Please fill all required fields");
-    resetIngestButton(button);
+    showNotification("Please fill Patient ID, Event Type, and Content", "error");
+    resetIngestButton(button, originalText);
     return;
   }
 
@@ -186,20 +190,29 @@ async function ingestEvent() {
       })
     });
 
-    if (!response.ok) throw new Error();
-    alert("✅ Event added");
+    if (!response.ok) {
+      throw new Error(`Server error: ${response.status}`);
+    }
 
-  } catch {
-    alert("❌ Failed to add event");
+    const data = await response.json();
+    showNotification(`✅ Event added (ID: ${data.event_id.substring(0, 8)}...)`, "success");
+
+    // Clear content field after successful submission
+    document.getElementById("content").value = "";
+    document.getElementById("eventTime").value = "";
+
+  } catch (err) {
+    showNotification(`❌ Failed to add event: ${err.message}`, "error");
+    console.error('Ingest error:', err);
   }
 
-  resetIngestButton(button);
+  resetIngestButton(button, originalText);
 }
 
-function resetIngestButton(button) {
+function resetIngestButton(button, originalText = "Add Event") {
   ingestInProgress = false;
   button.disabled = false;
-  button.innerText = "Add Event";
+  button.innerText = originalText;
 }
 
 /* =========================
@@ -225,7 +238,7 @@ async function runAnalysis() {
 
   try {
     if (!patientId || !query) {
-      output.innerText = "❌ Please enter Patient ID and query";
+      output.innerHTML = '<p class="text-red-600">❌ Please enter Patient ID and query</p>';
       resetAnalysisButton(button);
       return;
     }
@@ -236,24 +249,39 @@ async function runAnalysis() {
       body: JSON.stringify({ patient_id: patientId, query })
     });
 
+    if (!response.ok) {
+      throw new Error(`Server error: ${response.status}`);
+    }
+
     const data = await response.json();
 
     if (data.error) {
-      output.innerText = "❌ " + data.error;
+      output.innerHTML = `<p class="text-red-600">❌ ${escapeHtml(data.error)}</p>`;
     } else {
-      output.innerText = `
-Change Level: ${data.difference.change_level}
-Semantic Shift: ${data.difference.semantic_shift}
-
-From (Local): ${utcToLocal(data.difference.time_range.from)}
-To (Local): ${utcToLocal(data.difference.time_range.to)}
-
-Explanation:
-${data.explanation || "The records show limited explicit textual differences over time."}
-`;
+      const explanation = data.explanation || "The records show limited explicit textual differences over time.";
+      
+      output.innerHTML = `
+        <div class="space-y-3">
+          <div class="p-3 bg-blue-50 rounded border border-blue-200">
+            <p class="font-semibold text-blue-900">Change Level: ${escapeHtml(data.difference.change_level)}</p>
+            <p class="text-sm text-blue-700">Semantic Shift: ${data.difference.semantic_shift}</p>
+          </div>
+          
+          <div class="p-3 bg-gray-50 rounded border border-gray-200">
+            <p class="text-sm"><strong>From:</strong> ${escapeHtml(utcToLocal(data.difference.time_range.from))}</p>
+            <p class="text-sm"><strong>To:</strong> ${escapeHtml(utcToLocal(data.difference.time_range.to))}</p>
+          </div>
+          
+          <div class="p-3 bg-green-50 rounded border border-green-200">
+            <p class="font-semibold text-green-900 mb-2">AI Explanation:</p>
+            <p class="text-sm whitespace-pre-wrap text-gray-800">${escapeHtml(explanation)}</p>
+          </div>
+        </div>
+      `;
     }
-  } catch {
-    output.innerText = "❌ Failed to run analysis";
+  } catch (err) {
+    output.innerHTML = `<p class="text-red-600">❌ Failed to run analysis: ${escapeHtml(err.message)}</p>`;
+    console.error('Analysis error:', err);
   }
 
   resetAnalysisButton(button);
@@ -269,3 +297,37 @@ function resetAnalysisButton(button) {
   );
   if (summaryBtn) summaryBtn.disabled = false;
 }
+
+/* =========================
+   UTILITY FUNCTIONS
+========================= */
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Toast-style notification (optional enhancement)
+function showNotification(message, type = "info") {
+  // For now, using alert - could be replaced with a toast library
+  alert(message);
+}
+
+/* =========================
+   INITIALIZATION
+========================= */
+
+// Set default datetime to now when page loads
+document.addEventListener('DOMContentLoaded', () => {
+  const eventTimeInput = document.getElementById('eventTime');
+  if (eventTimeInput && !eventTimeInput.value) {
+    const now = new Date();
+    // Format for datetime-local input: YYYY-MM-DDTHH:mm
+    const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 16);
+    eventTimeInput.value = localDateTime;
+  }
+});

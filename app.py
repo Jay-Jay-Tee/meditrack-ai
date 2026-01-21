@@ -1,120 +1,51 @@
-from flask import Flask, jsonify, request
-from flask import render_template
+from flask import Flask, jsonify, request, render_template
+from flask_cors import CORS
 from qdrant_client import QdrantClient
-from qdrant_client.models import VectorParams, Distance
+from qdrant_client.models import VectorParams, Distance, PointStruct, Filter, FieldCondition, MatchValue
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import uuid
-from qdrant_client.models import PointStruct
 from fastembed import TextEmbedding
-from qdrant_client.models import Filter, FieldCondition, MatchValue
-from qdrant_client.models import PayloadSchemaType
 import numpy as np
-from datetime import datetime
 from google import genai
 import os
+import logging
 
 from dotenv import load_dotenv
 load_dotenv()
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__)
+CORS(app)  # Enable CORS for API access
 
-qdrant_client = QdrantClient(
-    url=os.getenv("QDRANT_URL"),
-    api_key=os.getenv("QDRANT_API_KEY")
-)
-
-@app.route("/")
-def home():
-    return render_template("index.html")
-
-
-@app.route("/test", methods=["POST"])
-def test():
-    return jsonify({"status": "test works"})
-
-@app.route("/qdrant-test")
-def qdrant_test():
-    collections = qdrant_client.get_collections()
-    return jsonify({
-        "status": "connected",
-        "collections": [c.name for c in collections.collections]
-    })
-
+# Configuration
 COLLECTION_NAME = "medical_events"
 VECTOR_DIM = 384
 
-@app.route("/timeline-summary", methods=["POST"])
-def timeline_summary():
-    data = request.json
-    patient_id = data["patient_id"]
-
-    points = fetch_timeline_events(patient_id)
-
-    if len(points) < 2:
-        return jsonify({"error": "Not enough events for timeline summary"})
-
-    # Build record-wise timeline
-    timeline = []
-    for p in points:
-        timeline.append({
-            "timestamp": p.payload["timestamp"],
-            "event_type": p.payload["event_type"],
-            "content": p.payload["content"]
-        })
-
-    # Overall semantic comparison (first vs last)
-    earliest = fetch_point_with_vector(points[0].id)
-    latest = fetch_point_with_vector(points[-1].id)
-
-    semantic_shift = cosine_distance(
-        earliest.vector,
-        latest.vector
+# Initialize clients
+try:
+    qdrant_client = QdrantClient(
+        url=os.getenv("QDRANT_URL"),
+        api_key=os.getenv("QDRANT_API_KEY")
     )
+    logger.info("Qdrant client initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize Qdrant client: {e}")
+    raise
 
-    timeline = build_patient_timeline(points)
-    data_quality = compute_data_quality(timeline)
+try:
+    embedding_model = TextEmbedding()
+    logger.info("Embedding model initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize embedding model: {e}")
+    raise
 
-    prompt = build_overview_prompt(timeline)
-    explanation = ai_explain(prompt)
-
-
-    return jsonify({
-    "timeline": timeline,
-    "semantic_shift": round(float(semantic_shift), 3),
-    "overall_summary": explanation,
-    "data_quality": data_quality
-})
-
-
-"""@app.route("/setup-collection")
-def setup_collection():
-    collections = qdrant_client.get_collections()
-    names = [c.name for c in collections.collections]
-
-    if COLLECTION_NAME not in names:
-        qdrant_client.create_collection(
-            collection_name=COLLECTION_NAME,
-            vectors_config=VectorParams(
-                size=VECTOR_DIM,
-                distance=Distance.COSINE
-            )
-        )
-        return jsonify({"status": "collection created"})
-    
-    return jsonify({"status": "collection already exists"})"""
-
-"""@app.route("/setup-payload-index")
-def setup_payload_index():
-    qdrant_client.create_payload_index(
-        collection_name=COLLECTION_NAME,
-        field_name="patient_id",
-        field_schema=PayloadSchemaType.KEYWORD
-    )
-    return jsonify({"status": "payload index created for patient_id"})"""
-
-
-embedding_model = TextEmbedding()
+# Verify Gemini API key
+if not os.getenv("GEMINI_API_KEY"):
+    logger.warning("GEMINI_API_KEY not found in environment variables")
 
 @dataclass
 class MedicalEvent:
@@ -123,9 +54,238 @@ class MedicalEvent:
     timestamp: str
     event_type: str
     modality: str
-    content: str 
+    content: str
+
+# ==================== ROUTES ====================
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+@app.route("/test", methods=["POST"])
+def test():
+    return jsonify({"status": "test works"})
+
+@app.route("/qdrant-test")
+def qdrant_test():
+    try:
+        collections = qdrant_client.get_collections()
+        return jsonify({
+            "status": "connected",
+            "collections": [c.name for c in collections.collections]
+        })
+    except Exception as e:
+        logger.error(f"Qdrant test failed: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route("/ingest", methods=["POST"])
+def ingest():
+    try:
+        data = request.json
+        
+        # Validate required fields
+        required_fields = ["content", "patient_id", "event_type"]
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return jsonify({"error": f"Missing required field: {field}"}), 400
+
+        # Sanitize inputs
+        patient_name = data.get("patient_name", "").strip() or "Unknown"
+        doctor_name = data.get("doctor_name", "").strip() or "Self"
+
+        event = create_medical_event(
+            content=data["content"],
+            patient_id=data["patient_id"],
+            event_type=data["event_type"],
+            timestamp=data.get("timestamp")
+        )
+
+        # Generate embedding
+        vector = list(embedding_model.embed(event.content))[0].tolist()
+
+        # Store in Qdrant
+        qdrant_client.upsert(
+            collection_name=COLLECTION_NAME,
+            points=[
+                PointStruct(
+                    id=event.event_id,
+                    vector=vector,
+                    payload={
+                        "patient_id": event.patient_id,
+                        "patient_name": patient_name,
+                        "doctor_name": doctor_name,
+                        "timestamp": event.timestamp,
+                        "event_type": event.event_type,
+                        "modality": "text",
+                        "content": event.content
+                    }
+                )
+            ]
+        )
+
+        logger.info(f"Event {event.event_id} ingested for patient {event.patient_id}")
+        
+        return jsonify({
+            "status": "stored",
+            "event_id": event.event_id
+        })
+
+    except Exception as e:
+        logger.error(f"Ingest error: {e}")
+        return jsonify({"error": "Failed to ingest event", "details": str(e)}), 500
+
+@app.route("/search", methods=["POST"])
+def search():
+    try:
+        data = request.json
+        
+        if not data.get("query") or not data.get("patient_id"):
+            return jsonify({"error": "Missing query or patient_id"}), 400
+
+        points = search_events(
+            query_text=data["query"],
+            patient_id=data["patient_id"],
+            limit=data.get("limit", 5)
+        )
+
+        # Format results for frontend
+        response = []
+        for p in points:
+            response.append({
+                "event_id": p.id,
+                "score": p.score,
+                "content": p.payload["content"],
+                "timestamp": p.payload["timestamp"],
+                "event_type": p.payload["event_type"]
+            })
+
+        return jsonify(response)
+
+    except Exception as e:
+        logger.error(f"Search error: {e}")
+        return jsonify({"error": "Search failed", "details": str(e)}), 500
+
+@app.route("/timeline-summary", methods=["POST"])
+def timeline_summary():
+    try:
+        data = request.json
+        patient_id = data.get("patient_id")
+        
+        if not patient_id:
+            return jsonify({"error": "Missing patient_id"}), 400
+
+        points = fetch_timeline_events(patient_id)
+
+        if len(points) < 1:
+            return jsonify({"error": "No events found for this patient"}), 404
+
+        if len(points) < 2:
+            # Return simple timeline without semantic shift
+            timeline = build_patient_timeline(points)
+            data_quality = compute_data_quality(timeline)
+            
+            return jsonify({
+                "timeline": timeline,
+                "semantic_shift": 0.0,
+                "overall_summary": "Only one event recorded. Timeline analysis requires multiple events.",
+                "data_quality": data_quality
+            })
+
+        # Build timeline
+        timeline = build_patient_timeline(points)
+        data_quality = compute_data_quality(timeline)
+
+        # Overall semantic comparison (first vs last)
+        earliest = fetch_point_with_vector(points[0].id)
+        latest = fetch_point_with_vector(points[-1].id)
+
+        semantic_shift = cosine_distance(
+            earliest.vector,
+            latest.vector
+        )
+
+        # Generate AI overview
+        prompt = build_overview_prompt(timeline)
+        explanation = ai_explain(prompt)
+
+        return jsonify({
+            "timeline": timeline,
+            "semantic_shift": round(float(semantic_shift), 3),
+            "overall_summary": explanation,
+            "data_quality": data_quality
+        })
+
+    except Exception as e:
+        logger.error(f"Timeline summary error: {e}")
+        return jsonify({"error": "Failed to generate timeline summary", "details": str(e)}), 500
+
+@app.route("/difference", methods=["POST"])
+def difference():
+    try:
+        data = request.json
+        
+        if not data.get("query") or not data.get("patient_id"):
+            return jsonify({"error": "Missing query or patient_id"}), 400
+
+        points = search_events(
+            query_text=data["query"],
+            patient_id=data["patient_id"]
+        )
+
+        diff = compute_difference(points)
+        return jsonify(diff)
+
+    except Exception as e:
+        logger.error(f"Difference error: {e}")
+        return jsonify({"error": "Failed to compute difference", "details": str(e)}), 500
+
+@app.route("/explain", methods=["POST"])
+def explain():
+    try:
+        data = request.json
+        
+        if not data.get("query") or not data.get("patient_id"):
+            return jsonify({"error": "Missing query or patient_id"}), 400
+
+        # Step 1: Get search results
+        points = search_events(
+            query_text=data["query"],
+            patient_id=data["patient_id"]
+        )
+
+        # Step 2: Compute difference
+        diff = compute_difference(points)
+
+        if "error" in diff:
+            return jsonify(diff), 400
+
+        # Step 3: Fetch full records
+        earliest = fetch_point_with_vector(diff["events_compared"]["earliest_id"])
+        latest = fetch_point_with_vector(diff["events_compared"]["latest_id"])
+
+        # Step 4: Build prompt
+        prompt = build_explanation_prompt(
+            earliest_text=earliest.payload["content"],
+            latest_text=latest.payload["content"],
+            diff_result=diff
+        )
+
+        # Step 5: Ask AI
+        explanation = ai_explain(prompt)
+
+        return jsonify({
+            "difference": diff,
+            "explanation": explanation
+        })
+
+    except Exception as e:
+        logger.error(f"Explain error: {e}")
+        return jsonify({"error": "Failed to generate explanation", "details": str(e)}), 500
+
+# ==================== HELPER FUNCTIONS ====================
 
 def create_medical_event(content, patient_id, event_type, timestamp=None):
+    """Create a MedicalEvent object with validation"""
     if timestamp is None:
         timestamp = datetime.now(timezone.utc).isoformat()
 
@@ -138,76 +298,8 @@ def create_medical_event(content, patient_id, event_type, timestamp=None):
         content=content
     )
 
-@app.route("/ingest", methods=["POST"])
-def ingest():
-    data = request.json
-
-    # sanitize inputs
-    patient_name = data.get("patient_name")
-    doctor_name = data.get("doctor_name")
-
-    if not isinstance(patient_name, str) or not patient_name.strip():
-        patient_name = "Unknown"
-
-    if not isinstance(doctor_name, str) or not doctor_name.strip():
-        doctor_name = "Self"
-
-    event = create_medical_event(
-        content=data["content"],
-        patient_id=data["patient_id"],
-        event_type=data["event_type"],
-        timestamp=data.get("timestamp")
-    )
-
-    vector = list(embedding_model.embed(event.content))[0].tolist()
-
-    qdrant_client.upsert(
-        collection_name=COLLECTION_NAME,
-        points=[
-            PointStruct(
-                id=event.event_id,
-                vector=vector,
-                payload={
-                    "patient_id": event.patient_id,
-                    "patient_name": patient_name,
-                    "doctor_name": doctor_name,
-                    "timestamp": event.timestamp,
-                    "event_type": event.event_type,
-                    "modality": "text",
-                    "content": event.content
-                }
-            )
-        ]
-    )
-
-    return jsonify({
-        "status": "stored",
-        "event_id": event.event_id
-    })
-
-@app.route("/search", methods=["POST"])
-def search():
-    data = request.json
-
-    points = search_events(
-        query_text=data["query"],
-        patient_id=data["patient_id"]
-    )
-
-    # Format results for frontend
-    response = []
-    for p in points:
-        response.append({
-            "event_id": p.id,
-            "score": p.score,
-            "content": p.payload["content"],
-            "timestamp": p.payload["timestamp"],
-            "event_type": p.payload["event_type"]
-        })
-
-    return jsonify(response)
-
 def search_events(query_text: str, patient_id: str, limit: int = 5):
+    """Search for events using semantic similarity"""
     # Convert query to vector
     query_vector = list(embedding_model.embed(query_text))[0].tolist()
 
@@ -231,7 +323,30 @@ def search_events(query_text: str, patient_id: str, limit: int = 5):
 
     return results.points
 
+def fetch_timeline_events(patient_id: str):
+    """Fetch all events for a patient, sorted by time"""
+    results = qdrant_client.scroll(
+        collection_name=COLLECTION_NAME,
+        scroll_filter=Filter(
+            must=[
+                FieldCondition(
+                    key="patient_id",
+                    match=MatchValue(value=patient_id)
+                )
+            ]
+        ),
+        limit=100,
+        with_payload=True
+    )
+
+    points = results[0]
+    return sorted(
+        points,
+        key=lambda p: datetime.fromisoformat(p.payload["timestamp"])
+    )
+
 def fetch_point_with_vector(event_id: str):
+    """Retrieve a single point with its vector"""
     return qdrant_client.retrieve(
         collection_name=COLLECTION_NAME,
         ids=[event_id],
@@ -239,16 +354,20 @@ def fetch_point_with_vector(event_id: str):
     )[0]
 
 def cosine_distance(vec_a, vec_b):
+    """Calculate cosine distance between two vectors"""
     a = np.array(vec_a)
     b = np.array(vec_b)
     return 1 - np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
 def sort_points_by_time(points):
+    """Sort points chronologically"""
     return sorted(
         points,
         key=lambda p: datetime.fromisoformat(p.payload["timestamp"])
     )
+
 def build_patient_timeline(points):
+    """Build a timeline from points"""
     ordered = sort_points_by_time(points)
     timeline = []
 
@@ -262,6 +381,7 @@ def build_patient_timeline(points):
     return timeline
 
 def compute_difference(points):
+    """Compute semantic and metadata differences"""
     if len(points) < 2:
         return {"error": "Not enough events to compute differences"}
 
@@ -308,12 +428,8 @@ def compute_difference(points):
         "metadata_changes": metadata_changes
     }
 
-from datetime import datetime
-
 def compute_data_quality(timeline):
-    """
-    Returns a label + explanation based on timeline richness
-    """
+    """Calculate data quality metrics"""
     count = len(timeline)
 
     if count == 0:
@@ -328,10 +444,9 @@ def compute_data_quality(timeline):
     ]
 
     span_days = (max(times) - min(times)).days + 1
-
     avg_length = sum(len(e["content"]) for e in timeline) / count
 
-    # Heuristic thresholds (tuned for hackathon clarity)
+    # Heuristic thresholds
     if count >= 6 and span_days >= 7 and avg_length >= 40:
         return {
             "label": "Rich",
@@ -349,46 +464,8 @@ def compute_data_quality(timeline):
         "description": "Records are few or vague; interpretation is limited."
     }
 
-
-def fetch_timeline_events(patient_id: str):
-    results = qdrant_client.scroll(
-        collection_name="medical_events",
-        scroll_filter=Filter(
-            must=[
-                FieldCondition(
-                    key="patient_id",
-                    match=MatchValue(value=patient_id)
-                )
-            ]
-        ),
-        limit=100,
-        with_payload=True
-    )
-
-    points = results[0]
-    return sorted(
-        points,
-        key=lambda p: datetime.fromisoformat(p.payload["timestamp"])
-    )
-
-@app.route("/difference", methods=["POST"])
-def difference():
-    data = request.json
-
-    points = search_events(
-        query_text=data["query"],
-        patient_id=data["patient_id"]
-    )
-
-    diff = compute_difference(points)
-
-    return jsonify(diff)
-
-def build_explanation_prompt(
-    earliest_text: str,
-    latest_text: str,
-    diff_result: dict
-):
+def build_explanation_prompt(earliest_text: str, latest_text: str, diff_result: dict):
+    """Build prompt for AI explanation of differences"""
     return f"""
 You are a medical record comparison assistant.
 
@@ -421,25 +498,8 @@ If no clear differences are explicitly stated, say:
 "The records show limited explicit textual differences over time."
 """
 
-def ai_explain(prompt: str):
-    client = genai.Client(
-        api_key=os.getenv("GEMINI_API_KEY")
-    )
-
-    response = client.models.generate_content(
-        model="gemini-3-flash-preview",
-        contents=prompt
-    )
-
-    text = getattr(response, "text", None)
-
-    if not text or not text.strip():
-        return "The records show limited explicit textual differences over time."
-
-    return text
-
-
 def build_overview_prompt(timeline):
+    """Build prompt for AI timeline overview"""
     timeline_text = "\n".join([
         f"- {e['timestamp']}: {e['event_type']} → {e['content']}"
         for e in timeline
@@ -468,47 +528,46 @@ Timeline:
 
 Write a concise, neutral overview of the patient's medical history.
 If records are vague, say so explicitly.
+Also, mention timestamps only if they are important to describing change.
 """
 
+def ai_explain(prompt: str):
+    """Get AI explanation using Gemini"""
+    try:
+        client = genai.Client(
+            api_key=os.getenv("GEMINI_API_KEY")
+        )
 
+        response = client.models.generate_content(
+            model="gemini-2.0-flash-exp",  # Updated to latest model
+            contents=prompt
+        )
 
-@app.route("/explain", methods=["POST"])
-def explain():
-    data = request.json
+        text = getattr(response, "text", None)
 
-    # Step 1: Get search results
-    points = search_events(
-        query_text=data["query"],
-        patient_id=data["patient_id"]
-    )
+        if not text or not text.strip():
+            return "The records show limited explicit textual differences over time."
 
-    # Step 2: Compute difference
-    diff = compute_difference(points)
+        return text
 
-    if "error" in diff:
-        return jsonify(diff)
+    except Exception as e:
+        logger.error(f"AI explanation error: {e}")
+        return "Unable to generate AI explanation at this time."
 
-    # Step 3: Fetch full records
-    earliest = fetch_point_with_vector(diff["events_compared"]["earliest_id"])
-    latest = fetch_point_with_vector(diff["events_compared"]["latest_id"])
+# ==================== ERROR HANDLERS ====================
 
-    # Step 4: Build prompt
-    prompt = build_explanation_prompt(
-        earliest_text=earliest.payload["content"],
-        latest_text=latest.payload["content"],
-        diff_result=diff
-    )
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({"error": "Endpoint not found"}), 404
 
-    # Step 5: Ask AI
-    explanation = ai_explain(prompt)
+@app.errorhandler(500)
+def internal_error(error):
+    logger.error(f"Internal server error: {error}")
+    return jsonify({"error": "Internal server error"}), 500
 
-    return jsonify({
-        "difference": diff,
-        "explanation": explanation
-    })
-
-
-print(app.url_map)
+# ==================== MAIN ====================
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    logger.info("Starting Medical Timeline AI server...")
+    logger.info(f"Available routes: {[str(rule) for rule in app.url_map.iter_rules()]}")
+    app.run(debug=True, host='0.0.0.0', port=5000)
