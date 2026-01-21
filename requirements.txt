@@ -1,6 +1,7 @@
 # Core Flask Framework
 flask
 flask-cors
+flask-login
 werkzeug
 
 # Vector Database Client
@@ -9,8 +10,8 @@ qdrant-client
 # Embeddings Model
 fastembed
 
-# AI/LLM - Google Gemini
-google-genai
+# AI Provider - Groq (PRIMARY)
+groq
 
 # Data Processing
 numpy
@@ -24,5 +25,19 @@ python-dateutil
 # HTTP Requests
 requests
 
+# PDF Generation
+reportlab
+
+# Image Processing
+pillow
+
+# Password Hashing
+bcrypt
+
 # WSGI Server for Production
 gunicorn
+
+# Additional utilities
+certifi
+charset-normalizer
+urllib3
