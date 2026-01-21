@@ -12,13 +12,16 @@ from qdrant_client.models import PayloadSchemaType
 import numpy as np
 from datetime import datetime
 from google import genai
+import os
 
+from dotenv import load_dotenv
+load_dotenv()
 
 app = Flask(__name__)
 
 qdrant_client = QdrantClient(
-    url="https://5d606d1a-e79e-4ea4-b9e0-4619e8d5f0c2.us-east4-0.gcp.cloud.qdrant.io:6333",
-    api_key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIn0.ynU8qmDmY8_NsxChqp_SzZvrfU9VEyZ1hotwqXuJrTA"
+    url=os.getenv("QDRANT_URL"),
+    api_key=os.getenv("QDRANT_API_KEY")
 )
 
 @app.route("/")
@@ -70,16 +73,18 @@ def timeline_summary():
     )
 
     timeline = build_patient_timeline(points)
+    data_quality = compute_data_quality(timeline)
 
     prompt = build_overview_prompt(timeline)
     explanation = ai_explain(prompt)
 
 
     return jsonify({
-        "timeline": timeline,
-        "semantic_shift": round(float(semantic_shift), 3),
-        "overall_summary": explanation
-    })
+    "timeline": timeline,
+    "semantic_shift": round(float(semantic_shift), 3),
+    "overall_summary": explanation,
+    "data_quality": data_quality
+})
 
 
 """@app.route("/setup-collection")
@@ -303,6 +308,48 @@ def compute_difference(points):
         "metadata_changes": metadata_changes
     }
 
+from datetime import datetime
+
+def compute_data_quality(timeline):
+    """
+    Returns a label + explanation based on timeline richness
+    """
+    count = len(timeline)
+
+    if count == 0:
+        return {
+            "label": "No Data",
+            "description": "No medical records available."
+        }
+
+    times = [
+        datetime.fromisoformat(e["timestamp"])
+        for e in timeline
+    ]
+
+    span_days = (max(times) - min(times)).days + 1
+
+    avg_length = sum(len(e["content"]) for e in timeline) / count
+
+    # Heuristic thresholds (tuned for hackathon clarity)
+    if count >= 6 and span_days >= 7 and avg_length >= 40:
+        return {
+            "label": "Rich",
+            "description": "Sufficient records over time to infer meaningful patterns."
+        }
+
+    if count >= 3 and span_days >= 2:
+        return {
+            "label": "Moderate",
+            "description": "Some continuity present, but insights may be limited."
+        }
+
+    return {
+        "label": "Sparse",
+        "description": "Records are few or vague; interpretation is limited."
+    }
+
+
 def fetch_timeline_events(patient_id: str):
     results = qdrant_client.scroll(
         collection_name="medical_events",
@@ -375,7 +422,10 @@ If no clear differences are explicitly stated, say:
 """
 
 def ai_explain(prompt: str):
-    client = genai.Client(api_key="AIzaSyAkixXheA9bAsjgbvKZ7MUYUyh5HOtyb7c")
+    client = genai.Client(
+        api_key=os.getenv("GEMINI_API_KEY")
+    )
+
     response = client.models.generate_content(
         model="gemini-3-flash-preview",
         contents=prompt
@@ -387,6 +437,7 @@ def ai_explain(prompt: str):
         return "The records show limited explicit textual differences over time."
 
     return text
+
 
 def build_overview_prompt(timeline):
     timeline_text = "\n".join([

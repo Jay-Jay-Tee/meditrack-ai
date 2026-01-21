@@ -67,6 +67,14 @@ async function runTimelineSummary(btn) {
       return;
     }
 
+    const quality = data.data_quality;
+
+    const qualityColor =
+      quality.label === "Rich" ? "text-green-700" :
+      quality.label === "Moderate" ? "text-yellow-700" :
+      "text-red-700";
+
+
     /* ---------- Build Table ---------- */
     let tableHTML = `
       <div class="overflow-x-auto">
@@ -114,6 +122,17 @@ async function runTimelineSummary(btn) {
       <p class="text-sm text-gray-600">
         Semantic Shift: <strong>${data.semantic_shift}</strong>
       </p>
+
+            <div class="mb-3 p-2 border rounded bg-gray-50">
+        <span class="font-semibold">Data Quality:</span>
+        <span class="${qualityColor} font-bold">
+          ${quality.label}
+        </span>
+        <p class="text-sm text-gray-600">
+          ${quality.description}
+        </p>
+      </div>
+
     `;
 
   } catch {

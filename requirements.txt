@@ -8,3 +8,4 @@ dataclasses
 google
 uuid
 datetime
+python-dotenv
