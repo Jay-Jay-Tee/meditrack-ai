@@ -1,5 +1,170 @@
 # 🔧 Troubleshooting Guide
 
+## 📄 Document Upload/Download Issues
+
+### Issue: Document preview not showing
+
+**Problem:** Image or PDF preview doesn't display after selecting file.
+
+**Solution:**
+
+1. **Check file type:**
+   ```
+   ✅ Supported: .jpg, .jpeg, .png, .gif, .pdf
+   ❌ Not supported: .docx, .txt, .zip, .heic
+   ```
+
+2. **Check file size:**
+   ```
+   Maximum: 10MB per file
+   If larger: Compress image or split PDF
+   ```
+
+3. **For images - verify it's actually an image:**
+   ```javascript
+   // Check in browser console (F12):
+   const input = document.getElementById('fileInput');
+   console.log(input.files[0].type);
+   // Should show: "image/jpeg" or "image/png"
+   ```
+
+4. **Hard refresh the page:**
+   ```
+   Chrome/Edge: Ctrl+Shift+R (Windows) or Cmd+Shift+R (Mac)
+   ```
+
+---
+
+### Issue: Document upload fails
+
+**Problem:** Error when trying to upload document.
+
+**Solution:**
+
+1. **Check uploads folder exists:**
+   ```bash
+   # Server should create it automatically, but verify:
+   ls -la uploads/
+   # If missing:
+   mkdir uploads
+   chmod 755 uploads
+   ```
+
+2. **Check disk space:**
+   ```bash
+   df -h
+   # Make sure you have free space
+   ```
+
+3. **Check server logs:**
+   ```bash
+   # Look for errors in terminal where you ran:
+   python app.py
+   
+   # Common errors:
+   [ERROR] Document upload error: Permission denied
+   [ERROR] Document upload error: No space left on device
+   ```
+
+4. **Verify file permissions:**
+   ```bash
+   # On Linux/Mac:
+   chmod 755 uploads/
+   
+   # On Windows: Right-click folder → Properties → Security
+   ```
+
+---
+
+### Issue: Download button not appearing
+
+**Problem:** Uploaded document but can't see download button in timeline.
+
+**Solution:**
+
+1. **Verify upload completed:**
+   - Check for success message after upload
+   - Look in server logs for "✅ Document stored"
+   
+2. **Check the uploads folder:**
+   ```bash
+   ls -la uploads/
+   # Should see files with UUID names like:
+   # a1b2c3d4-5e6f-7890-abcd-ef1234567890.pdf
+   ```
+
+3. **Re-analyze timeline:**
+   - Click "Analyze Timeline" button again
+   - Download buttons should appear for documents
+
+4. **Check browser console:**
+   ```javascript
+   // Press F12 → Console tab
+   // Look for JavaScript errors
+   ```
+
+---
+
+### Issue: Download fails or file corrupted
+
+**Problem:** Download button works but file won't open.
+
+**Solution:**
+
+1. **Check file exists on server:**
+   ```bash
+   ls -la uploads/
+   # Verify the file is there and has size > 0
+   ```
+
+2. **Check file integrity:**
+   ```bash
+   # On server:
+   file uploads/filename.pdf
+   # Should show: "PDF document" or "JPEG image"
+   ```
+
+3. **Try different browser:**
+   - Chrome/Edge usually work best
+   - Firefox/Safari may have different download behavior
+
+4. **Check download folder:**
+   - File might be in different location
+   - Check browser's download settings
+
+---
+
+### Issue: Uploaded document not showing in shared timeline
+
+**Problem:** Document appears in your timeline but not when sharing link.
+
+**Solution:**
+
+1. **Verify file was uploaded after creating the event:**
+   - The file must be successfully uploaded
+   - Check for green success message
+
+2. **Hard refresh the shared page:**
+   ```
+   Open shared link
+   Press: Ctrl+Shift+R (or Cmd+Shift+R)
+   ```
+
+3. **Check if uploads folder is accessible:**
+   ```python
+   # In app.py, verify:
+   @app.route("/download-document/<filename>")
+   # This endpoint must be working
+   ```
+
+4. **Test direct download URL:**
+   ```
+   Open: http://localhost:5000/download-document/your-file-uuid.pdf
+   Should download the file
+   ```
+
+---
+
 ## 🎨 UI/UX Issues
 
 ### Issue: Text boxes are hard to read (black text on dark background)

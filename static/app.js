@@ -288,16 +288,28 @@ function handleFile(file) {
   
   selectedFile = file;
   
+  // Show preview for images
   if (file.type.startsWith('image/')) {
     const reader = new FileReader();
     reader.onload = (e) => {
-      document.getElementById('previewImage').src = e.target.result;
+      const previewImg = document.getElementById('previewImage');
+      previewImg.src = e.target.result;
+      previewImg.style.display = 'block';
       document.getElementById('uploadPreview').classList.remove('hidden');
     };
     reader.readAsDataURL(file);
-  } else {
-    // For PDFs, show a placeholder
-    document.getElementById('previewImage').src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect fill="%23f3f4f6" width="200" height="200"/><text x="50%" y="50%" font-size="60" text-anchor="middle" dy=".3em">📄</text></svg>';
+  } else if (file.type === 'application/pdf') {
+    // For PDFs, show a placeholder icon
+    const previewImg = document.getElementById('previewImage');
+    previewImg.src = 'data:image/svg+xml,' + encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="300" height="400" viewBox="0 0 300 400">
+        <rect fill="#f3f4f6" width="300" height="400"/>
+        <text x="150" y="180" font-size="80" text-anchor="middle" fill="#9ca3af">📄</text>
+        <text x="150" y="240" font-size="20" text-anchor="middle" fill="#6b7280">PDF Document</text>
+        <text x="150" y="270" font-size="14" text-anchor="middle" fill="#9ca3af">${file.name}</text>
+      </svg>
+    `);
+    previewImg.style.display = 'block';
     document.getElementById('uploadPreview').classList.remove('hidden');
   }
 }
@@ -486,6 +498,13 @@ async function runTimelineSummary(btn) {
           hour: '2-digit',
           minute: '2-digit'
         });
+        
+        // Check if this is a document event
+        const isDocument = row.file_path && row.filename;
+        const eventContent = isDocument 
+          ? `${escapeHtml(row.content)} <br><button onclick="downloadDocument('${row.file_path}', '${escapeHtml(row.filename)}')" class="mt-2 px-3 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">📥 Download ${escapeHtml(row.filename)}</button>`
+          : escapeHtml(row.content);
+        
         tableHTML += `
           <tr class="hover:bg-blue-50 dark:hover:bg-gray-800 transition-colors">
             <td class="border px-4 py-3 font-medium" style="color: var(--text-muted);">${escapeHtml(date)}</td>
@@ -494,7 +513,7 @@ async function runTimelineSummary(btn) {
                 ${escapeHtml(row.event_type)}
               </span>
             </td>
-            <td class="border px-4 py-3" style="color: var(--text);">${escapeHtml(row.content)}</td>
+            <td class="border px-4 py-3" style="color: var(--text);">${eventContent}</td>
           </tr>
         `;
       }
@@ -504,12 +523,12 @@ async function runTimelineSummary(btn) {
       output.innerHTML = `
         <h3 class="font-bold text-lg mb-4" style="color: var(--text);">📋 Patient Timeline</h3>
         ${tableHTML}
-        <div class="mt-5 p-5 bg-blue-50 dark:bg-blue-900 rounded-lg border-2 border-blue-200 dark:border-blue-700">
+        <div class="mt-5 p-5 rounded-lg border-2" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-color: #93c5fd;">
           <p class="font-semibold mb-3 flex items-center gap-2" style="color: var(--text);">
             <span class="text-xl">🤖</span> AI Analysis (Powered by Groq)
           </p>
           <p class="text-sm leading-relaxed" style="color: var(--text);">${escapeHtml(data.overall_summary)}</p>
-          <div class="mt-4 pt-4 border-t-2 border-blue-200 dark:border-blue-700">
+          <div class="mt-4 pt-4 border-t-2" style="border-color: #93c5fd;">
             <p class="text-xs" style="color: var(--text-muted);">
               Semantic Shift: <strong class="text-purple-600 dark:text-purple-400">${data.semantic_shift}</strong>
             </p>
@@ -598,6 +617,13 @@ function sharePatientLink() {
   }).catch(() => {
     prompt('Copy this link:', link);
   });
+}
+
+// ==================== DOCUMENT DOWNLOAD ====================
+
+function downloadDocument(filePath, originalFilename) {
+  window.open(`/download-document/${filePath}`, '_blank');
+  showNotification(`Downloading ${originalFilename}...`, 'info');
 }
 
 // ==================== NOTIFICATIONS ====================

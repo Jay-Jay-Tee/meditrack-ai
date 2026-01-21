@@ -421,28 +421,29 @@ def upload_document():
         
         logger.info(f"📄 Processing document for patient: {patient_id}")
         
-        # Read file as base64
+        # Read file and save it
         file_content = file.read()
-        base64_image = base64.b64encode(file_content).decode('utf-8')
+        file_extension = os.path.splitext(file.filename)[1]
         
-        # Use Groq for OCR (vision capabilities)
-        if groq_client:
-            try:
-                # Note: Groq doesn't have vision API yet, so we'll use a workaround
-                # For now, we'll just store metadata and manual notes
-                logger.info("⚠️ Using metadata extraction (Groq vision not available)")
-                extracted_text = f"Document: {file.filename}"
-                
-                # Get manual notes if provided
-                additional_notes = request.form.get('notes', '')
-                if additional_notes:
-                    extracted_text += f"\n\nNotes: {additional_notes}"
-                
-            except Exception as e:
-                logger.error(f"OCR error: {e}")
-                extracted_text = f"Document uploaded: {file.filename}"
-        else:
-            extracted_text = f"Document uploaded: {file.filename}"
+        # Create uploads directory if it doesn't exist
+        uploads_dir = os.path.join(os.getcwd(), 'uploads')
+        os.makedirs(uploads_dir, exist_ok=True)
+        
+        # Generate unique filename
+        unique_filename = f"{uuid.uuid4()}{file_extension}"
+        file_path = os.path.join(uploads_dir, unique_filename)
+        
+        # Save file to disk
+        with open(file_path, 'wb') as f:
+            f.write(file_content)
+        
+        logger.info(f"📁 File saved to: {file_path}")
+        
+        # Get manual notes if provided
+        extracted_text = f"Document: {file.filename}"
+        additional_notes = request.form.get('notes', '')
+        if additional_notes:
+            extracted_text += f"\n\nNotes: {additional_notes}"
         
         # Create event with extracted text
         doc_date = datetime.now(timezone.utc).isoformat()
@@ -469,6 +470,8 @@ def upload_document():
                     "modality": "document",
                     "content": event.content,
                     "filename": file.filename,
+                    "file_path": unique_filename,  # Store relative path
+                    "file_extension": file_extension,
                     "doctor_name": event.doctor_name,
                     "hospital_name": event.hospital_name
                 }
@@ -481,12 +484,53 @@ def upload_document():
             "status": "success",
             "event_id": event.event_id,
             "extracted_text": extracted_text,
+            "filename": file.filename,
+            "file_path": unique_filename,
             "document_type": "document",
-            "note": "Document stored. Add manual notes for better context."
+            "note": "Document stored. You can download it anytime from your timeline."
         })
         
     except Exception as e:
         logger.error(f"Document upload error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/download-document/<filename>")
+def download_document(filename):
+    """Download uploaded document"""
+    try:
+        uploads_dir = os.path.join(os.getcwd(), 'uploads')
+        file_path = os.path.join(uploads_dir, filename)
+        
+        if not os.path.exists(file_path):
+            return jsonify({"error": "File not found"}), 404
+        
+        # Get original filename from Qdrant if possible
+        try:
+            results = qdrant_client.scroll(
+                collection_name=COLLECTION_NAME,
+                scroll_filter=Filter(must=[
+                    FieldCondition(key="file_path", match=MatchValue(value=filename))
+                ]),
+                limit=1,
+                with_payload=True
+            )
+            if results[0]:
+                original_filename = results[0][0].payload.get("filename", filename)
+            else:
+                original_filename = filename
+        except:
+            original_filename = filename
+        
+        logger.info(f"📥 Downloading document: {original_filename}")
+        
+        return send_file(
+            file_path,
+            as_attachment=True,
+            download_name=original_filename
+        )
+        
+    except Exception as e:
+        logger.error(f"Document download error: {e}")
         return jsonify({"error": str(e)}), 500
 
 # ==================== DATA INGESTION ====================
@@ -701,7 +745,10 @@ def build_patient_timeline(points):
         "event_type": p.payload["event_type"],
         "content": p.payload["content"],
         "doctor_name": p.payload.get("doctor_name", "Unknown"),
-        "hospital_name": p.payload.get("hospital_name", "Unknown")
+        "hospital_name": p.payload.get("hospital_name", "Unknown"),
+        "filename": p.payload.get("filename"),
+        "file_path": p.payload.get("file_path"),
+        "file_extension": p.payload.get("file_extension")
     } for p in sorted(points, key=lambda x: datetime.fromisoformat(x.payload["timestamp"]))]
 
 def compute_data_quality(timeline):

@@ -86,11 +86,11 @@
       </div>
 
       <!-- AI Summary Card -->
-      <div class="bg-gradient-to-br from-blue-50 to-indigo-50 shadow-xl rounded-2xl p-6">
+      <div class="bg-white shadow-xl rounded-2xl p-6">
         <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
           <span>🤖</span> AI-Generated Summary
         </h2>
-        <div id="aiSummary" class="p-5 rounded-xl bg-white text-gray-800 shadow-inner">
+        <div id="aiSummary" class="p-5 rounded-xl text-gray-800 shadow-inner" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);">
           <!-- Filled by JS -->
         </div>
       </div>
@@ -223,6 +223,14 @@
             minute: '2-digit'
           });
 
+          // Check if this is a document event
+          const isDocument = event.file_path && event.filename;
+          let detailsHTML = escapeHtml(event.content);
+          
+          if (isDocument) {
+            detailsHTML += `<br><a href="/download-document/${event.file_path}" target="_blank" class="inline-block mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg text-xs hover:bg-blue-600 transition-colors font-semibold no-print">📥 Download ${escapeHtml(event.filename)}</a>`;
+          }
+
           tableHTML += `
             <tr class="hover:bg-blue-50 transition-colors">
               <td class="border border-gray-200 px-5 py-4 text-gray-700 font-semibold whitespace-nowrap">${escapeHtml(date)}</td>
@@ -233,7 +241,7 @@
                   ${escapeHtml(event.event_type)}
                 </span>
               </td>
-              <td class="border border-gray-200 px-5 py-4 text-gray-800">${escapeHtml(event.content)}</td>
+              <td class="border border-gray-200 px-5 py-4 text-gray-800">${detailsHTML}</td>
             </tr>
           `;
         }

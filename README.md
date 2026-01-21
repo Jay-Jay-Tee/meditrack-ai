@@ -5,9 +5,10 @@
 ### What Makes This Game-Changing
 
 1. **🎤 Voice-to-Medical-Note** - Real-time speech-to-text with Web Speech API
-2. **📸 Smart Document Upload** - Upload lab reports and medical documents
-3. **📄 Professional PDF Export** - Doctor-ready medical reports in seconds
-4. **🌙 Beautiful Dark Mode** - Eye-friendly interface for all lighting conditions
+2. **📸 Smart Document Upload** - Upload lab reports and medical documents with preview
+3. **📥 Document Download** - Download any uploaded document anytime from timeline
+4. **📄 Professional PDF Export** - Doctor-ready medical reports in seconds
+5. **🌙 Beautiful Dark Mode** - Eye-friendly interface for all lighting conditions
 5. **🔗 Shareable Patient Links** - Secure, read-only profile sharing for healthcare providers
 6. **🔐 Secure Authentication** - Patient accounts with hospital associations
 7. **🧠 AI-Powered Analysis** - Timeline analysis with Groq Llama 3.3 70B
