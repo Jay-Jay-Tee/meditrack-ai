@@ -506,7 +506,7 @@ async function runTimelineSummary(btn) {
           : escapeHtml(row.content);
         
         tableHTML += `
-          <tr class="hover:bg-blue-50 dark:hover:bg-gray-800 transition-colors">
+          <tr class="hover:bg-blue-50 dark:hover:bg-gray-900/20 transition-colors">
             <td class="border px-4 py-3 font-medium" style="color: var(--text-muted);">${escapeHtml(date)}</td>
             <td class="border px-4 py-3">
               <span class="badge bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
