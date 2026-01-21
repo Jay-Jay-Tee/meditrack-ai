@@ -755,22 +755,4 @@ fetch('/me', { credentials: 'include' })
 
 ---
 
-## ✅ Pre-Deployment Checklist
-
-Before going to production:
-
-- [ ] Change SECRET_KEY to random value
-- [ ] Set DEBUG=False
-- [ ] Use production Qdrant instance
-- [ ] Set up HTTPS/SSL
-- [ ] Configure proper CORS origins
-- [ ] Add rate limiting
-- [ ] Set up logging to file
-- [ ] Configure backup strategy
-- [ ] Test all features
-- [ ] Load test with 100+ users
-- [ ] Set up monitoring (Sentry, etc.)
-
----
-
-**Need immediate help? Check our GitHub Issues or Discord server!**
+**Need immediate help? Check our GitHub Issues!**
