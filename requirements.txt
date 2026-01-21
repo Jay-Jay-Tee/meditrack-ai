@@ -3,9 +3,7 @@ qdrant-client
 qdrant-client[fastembed]
 numpy
 google-genai
-os
 dataclasses
-google
 uuid
 datetime
 python-dotenv
