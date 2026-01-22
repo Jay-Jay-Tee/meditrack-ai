@@ -165,8 +165,9 @@
           document.getElementById('hospitalName').textContent = data.timeline[0].hospital_name;
         }
 
-        // Fill quality info
+        // Fill quality info with insights
         const quality = data.data_quality;
+        const insights = data.timeline_insights;
         const qualityColor = 
           quality.label === 'Rich' ? 'bg-green-100 text-green-800 border-green-300' :
           quality.label === 'Moderate' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
@@ -179,14 +180,45 @@
             </span>
             <span class="text-gray-700 font-medium">${quality.description}</span>
           </div>
-          <div class="grid md:grid-cols-2 gap-4 mt-5">
+          <div class="grid md:grid-cols-3 gap-4 mt-5">
             <div class="bg-white p-4 rounded-xl border-2 border-gray-200 shadow-sm">
               <div class="text-gray-600 text-sm font-medium">Total Events</div>
-              <div class="text-4xl font-bold text-blue-600 mt-2">${data.timeline.length}</div>
+              <div class="text-4xl font-bold text-blue-600 mt-2">${insights.total_events}</div>
+              <div class="text-xs text-gray-500 mt-1">${insights.activity_rate} per month</div>
             </div>
             <div class="bg-white p-4 rounded-xl border-2 border-gray-200 shadow-sm">
-              <div class="text-gray-600 text-sm font-medium">Health Change Index</div>
-              <div class="text-4xl font-bold text-purple-600 mt-2">${data.semantic_shift}</div>
+              <div class="text-gray-600 text-sm font-medium">Care Continuity</div>
+              <div class="text-2xl font-bold mt-2" style="color: ${
+                insights.continuity === 'Excellent' ? '#10b981' :
+                insights.continuity === 'Good' ? '#3b82f6' :
+                insights.continuity === 'Fair' ? '#f59e0b' : '#ef4444'
+              };">${insights.continuity}</div>
+              <div class="text-xs text-gray-500 mt-1">Max gap: ${insights.longest_gap_days} days</div>
+            </div>
+            <div class="bg-white p-4 rounded-xl border-2 border-gray-200 shadow-sm">
+              <div class="text-gray-600 text-sm font-medium">Data Completeness</div>
+              <div class="text-4xl font-bold text-purple-600 mt-2">${insights.completeness}%</div>
+              <div class="text-xs text-gray-500 mt-1">${insights.unique_hospitals} hospitals, ${insights.unique_doctors} doctors</div>
+            </div>
+          </div>
+          
+          <!-- Event Breakdown -->
+          <div class="mt-5 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl border-2 border-purple-200">
+            <h4 class="font-semibold mb-3 text-gray-800">📈 Event Breakdown</h4>
+            <div class="space-y-2">
+              ${Object.entries(insights.event_breakdown)
+                .sort((a, b) => b[1] - a[1])
+                .map(([type, percent]) => `
+                  <div class="flex items-center justify-between text-sm">
+                    <span class="font-medium text-gray-700">${escapeHtml(type)}</span>
+                    <div class="flex items-center gap-2">
+                      <div class="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div class="h-full bg-blue-500" style="width: ${percent}%"></div>
+                      </div>
+                      <span class="font-bold text-blue-600 w-12 text-right">${percent}%</span>
+                    </div>
+                  </div>
+                `).join('')}
             </div>
           </div>
         `;

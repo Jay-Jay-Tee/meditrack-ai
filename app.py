@@ -601,27 +601,37 @@ def timeline_summary():
         if not points:
             return jsonify({"error": "No events found"}), 404
         
+        timeline = build_patient_timeline(points)
+        
         if len(points) == 1:
-            timeline = build_patient_timeline(points)
             return jsonify({
                 "timeline": timeline,
-                "semantic_shift": 0.0,
-                "overall_summary": "Only one event recorded. More data needed for timeline analysis.",
+                "timeline_insights": {
+                    "activity_rate": 0,
+                    "activity_level": "N/A",
+                    "activity_description": "Only one event recorded",
+                    "longest_gap_days": 0,
+                    "continuity": "N/A",
+                    "continuity_description": "Need more events for analysis",
+                    "completeness": 100 if timeline[0]["doctor_name"] != "Unknown" else 0,
+                    "event_breakdown": {timeline[0]["event_type"]: 100},
+                    "unique_hospitals": 1 if timeline[0]["hospital_name"] != "Unknown" else 0,
+                    "unique_doctors": 1 if timeline[0]["doctor_name"] != "Unknown" else 0,
+                    "total_days": 1,
+                    "total_events": 1
+                },
+                "overall_summary": "Only one event recorded. Add more medical events to see detailed timeline analysis.",
                 "data_quality": compute_data_quality(timeline)
             })
         
-        timeline = build_patient_timeline(points)
-        earliest = fetch_point_with_vector(points[0].id)
-        latest = fetch_point_with_vector(points[-1].id)
-        
-        shift = cosine_distance(earliest.vector, latest.vector)
+        insights = compute_timeline_insights(timeline)
         summary = ai_explain(build_overview_prompt(timeline))
         
         logger.info(f"📊 Timeline generated for {patient_id}: {len(points)} events")
         
         return jsonify({
             "timeline": timeline,
-            "semantic_shift": round(float(shift), 3),
+            "timeline_insights": insights,
             "overall_summary": summary,
             "data_quality": compute_data_quality(timeline)
         })
@@ -740,17 +750,6 @@ def fetch_timeline_events(patient_id):
         logger.error(f"Fetch timeline error: {e}")
         return []
 
-def fetch_point_with_vector(event_id):
-    return qdrant_client.retrieve(
-        collection_name=COLLECTION_NAME,
-        ids=[event_id],
-        with_vectors=True
-    )[0]
-
-def cosine_distance(vec_a, vec_b):
-    a, b = np.array(vec_a), np.array(vec_b)
-    return 1 - np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
-
 def build_patient_timeline(points):
     timeline = []
 
@@ -772,6 +771,91 @@ def build_patient_timeline(points):
         })
 
     return timeline
+
+def compute_timeline_insights(timeline):
+    """Calculate meaningful timeline metrics"""
+    if not timeline:
+        return None
+    
+    # Sort by timestamp
+    sorted_timeline = sorted(timeline, key=lambda x: datetime.fromisoformat(x["timestamp"]))
+    
+    # Calculate time span
+    first_date = datetime.fromisoformat(sorted_timeline[0]["timestamp"])
+    last_date = datetime.fromisoformat(sorted_timeline[-1]["timestamp"])
+    total_days = (last_date - first_date).days + 1
+    
+    # Calculate activity rate (events per month)
+    months = max(total_days / 30, 1)  # At least 1 month
+    activity_rate = len(timeline) / months
+    
+    # Find longest gap between events
+    max_gap_days = 0
+    for i in range(1, len(sorted_timeline)):
+        prev_date = datetime.fromisoformat(sorted_timeline[i-1]["timestamp"])
+        curr_date = datetime.fromisoformat(sorted_timeline[i]["timestamp"])
+        gap = (curr_date - prev_date).days
+        max_gap_days = max(max_gap_days, gap)
+    
+    # Event type breakdown (percentages)
+    event_types = {}
+    for event in timeline:
+        event_type = event["event_type"]
+        event_types[event_type] = event_types.get(event_type, 0) + 1
+    
+    event_breakdown = {
+        event_type: round((count / len(timeline)) * 100, 1)
+        for event_type, count in event_types.items()
+    }
+    
+    # Unique care providers
+    hospitals = set(e["hospital_name"] for e in timeline if e["hospital_name"] != "Unknown")
+    doctors = set(e["doctor_name"] for e in timeline if e["doctor_name"] != "Unknown")
+    
+    # Data completeness (percentage of events with doctor/hospital info)
+    complete_events = sum(1 for e in timeline 
+                         if e["doctor_name"] != "Unknown" and e["hospital_name"] != "Unknown")
+    completeness = round((complete_events / len(timeline)) * 100, 1) if timeline else 0
+    
+    # Activity level assessment
+    if activity_rate >= 3:
+        activity_level = "High"
+        activity_desc = "Frequent medical visits"
+    elif activity_rate >= 1:
+        activity_level = "Moderate"
+        activity_desc = "Regular checkups"
+    else:
+        activity_level = "Low"
+        activity_desc = "Infrequent visits"
+    
+    # Continuity assessment (based on gaps)
+    if max_gap_days <= 14:
+        continuity = "Excellent"
+        continuity_desc = "No significant gaps in care"
+    elif max_gap_days <= 60:
+        continuity = "Good"
+        continuity_desc = "Minor gaps between visits"
+    elif max_gap_days <= 180:
+        continuity = "Fair"
+        continuity_desc = "Some gaps in care history"
+    else:
+        continuity = "Poor"
+        continuity_desc = "Large gaps in documentation"
+    
+    return {
+        "activity_rate": round(activity_rate, 1),
+        "activity_level": activity_level,
+        "activity_description": activity_desc,
+        "longest_gap_days": max_gap_days,
+        "continuity": continuity,
+        "continuity_description": continuity_desc,
+        "completeness": completeness,
+        "event_breakdown": event_breakdown,
+        "unique_hospitals": len(hospitals),
+        "unique_doctors": len(doctors),
+        "total_days": total_days,
+        "total_events": len(timeline)
+    }
 
 def compute_data_quality(timeline):
     count = len(timeline)

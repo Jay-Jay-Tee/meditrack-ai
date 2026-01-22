@@ -472,6 +472,7 @@ async function runTimelineSummary(btn) {
     if (data.error) {
       output.innerHTML = `<div class="text-center text-red-500"><p class="text-4xl mb-3">❌</p><p class="font-medium">${escapeHtml(data.error)}</p></div>`;
     } else {
+      const insights = data.timeline_insights;
       const qualityColor = 
         data.data_quality.label === 'Rich' ? 'text-green-600 dark:text-green-400' :
         data.data_quality.label === 'Moderate' ? 'text-yellow-600 dark:text-yellow-400' :
@@ -523,16 +524,70 @@ async function runTimelineSummary(btn) {
       output.innerHTML = `
         <h3 class="font-bold text-lg mb-4" style="color: var(--text);">📋 Patient Timeline</h3>
         ${tableHTML}
+        
+        <!-- Timeline Insights Dashboard -->
+        <div class="mt-5 grid md:grid-cols-2 gap-4">
+          <div class="p-5 rounded-lg border-2" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-color: #93c5fd;">
+            <p class="font-semibold mb-3 flex items-center gap-2" style="color: var(--text);">
+              <span class="text-xl">📊</span> Timeline Insights
+            </p>
+            <div class="space-y-3 text-sm">
+              <div>
+                <span class="font-medium" style="color: var(--text-muted);">Activity Rate:</span>
+                <span class="font-bold ml-2" style="color: var(--primary);">${insights.activity_rate} events/month</span>
+                <span class="text-xs ml-2" style="color: var(--text-muted);">(${insights.activity_level} - ${insights.activity_description})</span>
+              </div>
+              <div>
+                <span class="font-medium" style="color: var(--text-muted);">Care Continuity:</span>
+                <span class="font-bold ml-2" style="color: ${
+                  insights.continuity === 'Excellent' ? '#10b981' :
+                  insights.continuity === 'Good' ? '#3b82f6' :
+                  insights.continuity === 'Fair' ? '#f59e0b' : '#ef4444'
+                };">${insights.continuity}</span>
+                <span class="text-xs ml-2" style="color: var(--text-muted);">(Max gap: ${insights.longest_gap_days} days)</span>
+              </div>
+              <div>
+                <span class="font-medium" style="color: var(--text-muted);">Data Completeness:</span>
+                <span class="font-bold ml-2" style="color: var(--primary);">${insights.completeness}%</span>
+              </div>
+              <div>
+                <span class="font-medium" style="color: var(--text-muted);">Care Providers:</span>
+                <span class="font-bold ml-2" style="color: var(--text);">${insights.unique_hospitals} hospitals, ${insights.unique_doctors} doctors</span>
+              </div>
+              <div>
+                <span class="font-medium" style="color: var(--text-muted);">Timeline Span:</span>
+                <span class="font-bold ml-2" style="color: var(--text);">${insights.total_days} days (${insights.total_events} events)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-5 rounded-lg border-2" style="background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%); border-color: #c084fc;">
+            <p class="font-semibold mb-3 flex items-center gap-2" style="color: var(--text);">
+              <span class="text-xl">📈</span> Event Breakdown
+            </p>
+            <div class="space-y-2 text-sm">
+              ${Object.entries(insights.event_breakdown)
+                .sort((a, b) => b[1] - a[1])
+                .map(([type, percent]) => `
+                  <div class="flex items-center justify-between">
+                    <span class="font-medium" style="color: var(--text);">${escapeHtml(type)}</span>
+                    <div class="flex items-center gap-2">
+                      <div class="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div class="h-full bg-blue-500" style="width: ${percent}%"></div>
+                      </div>
+                      <span class="font-bold text-xs" style="color: var(--primary);">${percent}%</span>
+                    </div>
+                  </div>
+                `).join('')}
+            </div>
+          </div>
+        </div>
+
         <div class="mt-5 p-5 rounded-lg border-2" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-color: #93c5fd;">
           <p class="font-semibold mb-3 flex items-center gap-2" style="color: var(--text);">
             <span class="text-xl">🤖</span> AI Analysis (Powered by Groq)
           </p>
           <p class="text-sm leading-relaxed" style="color: var(--text);">${escapeHtml(data.overall_summary)}</p>
-          <div class="mt-4 pt-4 border-t-2" style="border-color: #93c5fd;">
-            <p class="text-xs" style="color: var(--text-muted);">
-              Semantic Shift: <strong class="text-purple-600 dark:text-purple-400">${data.semantic_shift}</strong>
-            </p>
-          </div>
         </div>
         <div class="mt-4 p-4 border-2 rounded-lg" style="border-color: var(--input-border); background-color: var(--input-bg);">
           <div class="flex items-center gap-3">
