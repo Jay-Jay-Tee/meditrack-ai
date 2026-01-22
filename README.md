@@ -574,4 +574,6 @@ The following features are **intentionally out of scope** for the current implem
 
 These limitations do **not** affect core timeline storage, semantic search, or reporting functionality.
 
+---
+
 **Made with ❤️ for better healthcare**
