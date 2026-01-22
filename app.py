@@ -19,6 +19,10 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.units import inch
 import atexit
+from dateutil import tz
+
+LOCAL_TZ = tz.tzlocal()
+
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -597,25 +601,27 @@ def timeline_summary():
         if not points:
             return jsonify({"error": "No events found"}), 404
         
-        timeline = build_patient_timeline(points)
-        
         if len(points) == 1:
+            timeline = build_patient_timeline(points)
             return jsonify({
                 "timeline": timeline,
-                "event_clusters": [],
+                "semantic_shift": 0.0,
                 "overall_summary": "Only one event recorded. More data needed for timeline analysis.",
                 "data_quality": compute_data_quality(timeline)
             })
         
-        # Compute event clusters instead of overall semantic shift
-        clusters = compute_event_clusters(points)
+        timeline = build_patient_timeline(points)
+        earliest = fetch_point_with_vector(points[0].id)
+        latest = fetch_point_with_vector(points[-1].id)
+        
+        shift = cosine_distance(earliest.vector, latest.vector)
         summary = ai_explain(build_overview_prompt(timeline))
         
         logger.info(f"📊 Timeline generated for {patient_id}: {len(points)} events")
         
         return jsonify({
             "timeline": timeline,
-            "event_clusters": clusters,
+            "semantic_shift": round(float(shift), 3),
             "overall_summary": summary,
             "data_quality": compute_data_quality(timeline)
         })
@@ -629,8 +635,6 @@ def timeline_summary():
 def export_pdf():
     try:
         patient_id = request.json.get("patient_id")
-        timezone_offset = request.json.get("timezone_offset", 0)  # Minutes from UTC
-        
         if not patient_id:
             return jsonify({"error": "patient_id required"}), 400
         
@@ -658,20 +662,15 @@ def export_pdf():
         story.append(Paragraph("Medical Timeline Report", title_style))
         story.append(Paragraph(f"Hospital: {hospital_name}", styles['Normal']))
         story.append(Paragraph(f"Patient ID: {patient_id}", styles['Normal']))
-        
-        # Convert current time to local time for "Generated" timestamp
-        from datetime import timedelta
-        local_now = datetime.now(timezone.utc) + timedelta(minutes=timezone_offset)
-        story.append(Paragraph(f"Generated: {local_now.strftime('%B %d, %Y at %I:%M %p')}", styles['Normal']))
+        story.append(Paragraph(f"Generated: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}", styles['Normal']))
         story.append(Spacer(1, 0.4*inch))
         
         table_data = [['Date', 'Type', 'Details']]
         for e in timeline:
-            # Convert UTC timestamp to local time
             utc_time = datetime.fromisoformat(e['timestamp'])
-            local_time = utc_time + timedelta(minutes=timezone_offset)
-            date = local_time.strftime('%m/%d/%Y %I:%M %p')
-            
+            local_time = utc_time.astimezone(LOCAL_TZ)
+
+            date = local_time.strftime('%b %d, %Y %I:%M %p')
             table_data.append([
                 Paragraph(date, styles['Normal']),
                 Paragraph(e['event_type'], styles['Normal']),
@@ -709,10 +708,15 @@ def export_pdf():
 # ==================== HELPER FUNCTIONS ====================
 
 def create_medical_event(content, patient_id, event_type, timestamp=None, doctor_name="", hospital_name=""):
+    log_time_utc = (
+        datetime.fromisoformat(timestamp).astimezone(timezone.utc)
+        if timestamp
+        else datetime.now(timezone.utc)
+    )
     return MedicalEvent(
         event_id=str(uuid.uuid4()),
         patient_id=patient_id,
-        timestamp=timestamp or datetime.now(timezone.utc).isoformat(),
+        timestamp=log_time_utc.isoformat(),
         event_type=event_type,
         modality="text",
         content=content,
@@ -747,70 +751,128 @@ def cosine_distance(vec_a, vec_b):
     a, b = np.array(vec_a), np.array(vec_b)
     return 1 - np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
-def compute_event_clusters(points):
-    """
-    Compute semantic similarity between consecutive events.
-    Returns clusters of related events based on semantic similarity.
-    """
-    if len(points) < 2:
-        return []
-    
-    clusters = []
-    
-    # Get vectors for all points
-    points_with_vectors = []
-    for p in points:
-        try:
-            pv = fetch_point_with_vector(p.id)
-            points_with_vectors.append({
-                "point": p,
-                "vector": pv.vector,
-                "timestamp": datetime.fromisoformat(p.payload["timestamp"])
-            })
-        except:
-            continue
-    
-    # Compute consecutive similarities
-    for i in range(len(points_with_vectors) - 1):
-        curr = points_with_vectors[i]
-        next_p = points_with_vectors[i + 1]
-        
-        similarity = 1 - cosine_distance(curr["vector"], next_p["vector"])
-        time_gap_days = (next_p["timestamp"] - curr["timestamp"]).days
-        
-        # Classify relationship
-        if similarity > 0.7 and time_gap_days < 30:
-            relation = "Likely related condition"
-        elif similarity > 0.5 and time_gap_days < 90:
-            relation = "Possibly related"
-        elif time_gap_days < 7:
-            relation = "Close temporal proximity"
-        else:
-            relation = "Distinct event"
-        
-        clusters.append({
-            "event1": curr["point"].payload["event_type"],
-            "event2": next_p["point"].payload["event_type"],
-            "similarity": round(float(similarity), 3),
-            "time_gap_days": time_gap_days,
-            "relationship": relation
-        })
-    
-    return clusters
-
 def build_patient_timeline(points):
-    return [{
-        "timestamp": p.payload["timestamp"],
-        "event_type": p.payload["event_type"],
-        "content": p.payload["content"],
-        "doctor_name": p.payload.get("doctor_name", "Unknown"),
-        "hospital_name": p.payload.get("hospital_name", "Unknown"),
-        "filename": p.payload.get("filename"),
-        "file_path": p.payload.get("file_path"),
-        "file_extension": p.payload.get("file_extension")
-    } for p in sorted(points, key=lambda x: datetime.fromisoformat(x.payload["timestamp"]))]
+    timeline = []
+
+    for p in sorted(points, key=lambda x: datetime.fromisoformat(x.payload["timestamp"])):
+        utc_time = datetime.fromisoformat(p.payload["timestamp"])
+        local_time = utc_time.astimezone(LOCAL_TZ)
+
+        timeline.append({
+            "timestamp": utc_time.isoformat(),               
+            "local_time": local_time.isoformat(),            
+            "event_type": p.payload["event_type"],
+            "content": p.payload["content"],
+            "doctor_name": p.payload.get("doctor_name", "Unknown"),
+            "hospital_name": p.payload.get("hospital_name", "Unknown"),
+            "filename": p.payload.get("filename"),
+            "file_path": p.payload.get("file_path"),
+            "file_extension": p.payload.get("file_extension"),
+            "timestamp_type": "log_time"                     
+        })
+
+    return timeline
 
 def compute_data_quality(timeline):
     count = len(timeline)
     if count == 0:
         return {"label": "No Data", "description": "No medical records available"}
+    
+    times = [datetime.fromisoformat(e["timestamp"]) for e in timeline]
+    span = (max(times) - min(times)).days + 1
+    avg_len = sum(len(e["content"]) for e in timeline) / count
+    
+    if count >= 6 and span >= 7 and avg_len >= 40:
+        return {"label": "Rich", "description": "Sufficient records for comprehensive analysis"}
+    if count >= 3 and span >= 2:
+        return {"label": "Moderate", "description": "Some continuity present, insights may be limited"}
+    return {"label": "Sparse", "description": "Limited data, interpretation constrained"}
+
+def human_time(iso_ts):
+    if not iso_ts:
+        return "unknown time"
+    dt = datetime.fromisoformat(iso_ts)
+    local_dt = dt.astimezone(LOCAL_TZ)
+    return local_dt.strftime("%b %d, %Y at %I:%M %p")
+
+def build_overview_prompt(timeline):
+    entries = "\n".join([
+        (
+            f"- Event occurred on {e['occurred_at'] or 'an unspecified date'}, "
+            f"and was logged between {human_time(e['logged_at'])}."
+            f"\n  Type: {e['event_type']}"
+            f"\n  Details: {e['content']}"
+        )
+        for e in timeline
+    ])
+
+    return f"""
+You are a medical timeline summarization assistant.
+
+IMPORTANT CONTEXT:
+- All times refer to documentation (log) time unless explicitly stated as "occurred on".
+- Logged times may differ from actual medical event dates.
+- Do NOT output raw timestamps or ISO date strings.
+
+STRICT RULES:
+- Do NOT infer exact onset times
+- Do NOT assume events occurred at log time
+- Use clear, human-readable time references only
+
+Timeline:
+{entries}
+
+Write a clear, professional medical summary suitable for clinicians.
+"""
+
+
+def ai_explain(prompt):
+    """AI explanation using Groq"""
+    try:
+        if not groq_client:
+            logger.warning("Groq client not initialized")
+            return "AI analysis unavailable. Groq API not configured."
+        
+        response = groq_client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=2048,
+            temperature=0.7
+        )
+        
+        if response.choices and response.choices[0].message.content:
+            return response.choices[0].message.content
+        else:
+            return "AI returned empty response. Timeline data is still accessible."
+            
+    except Exception as e:
+        error_msg = str(e).lower()
+        
+        if "rate limit" in error_msg or "quota" in error_msg:
+            logger.error(f"Groq rate limit: {e}")
+            return "⚠️ AI rate limit reached. Timeline data is available below."
+        elif "auth" in error_msg or "invalid" in error_msg:
+            logger.error(f"Groq auth failed: {e}")
+            return "⚠️ AI authentication failed. Check GROQ_API_KEY."
+        else:
+            logger.error(f"Groq error: {e}")
+            return "⚠️ AI analysis temporarily unavailable. Timeline data is still visible below."
+
+# ==================== ERROR HANDLERS ====================
+
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({"error": "Endpoint not found"}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    logger.error(f"Internal server error: {error}")
+    return jsonify({"error": "Internal server error"}), 500
+
+# ==================== MAIN ====================
+
+if __name__ == "__main__":
+    logger.info("🚀 Starting development server...")
+    logger.info("📍 Access at: http://localhost:5000")
+    logger.info("💡 Press Ctrl+C to stop")
+    app.run(debug=True, host='0.0.0.0', port=5000)  

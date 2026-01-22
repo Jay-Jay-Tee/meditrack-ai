@@ -215,7 +215,7 @@
         `;
 
         for (const event of data.timeline) {
-          const date = new Date(event.timestamp).toLocaleString('en-US', {
+          const date = new Date(event.local_time).toLocaleString(undefined, {
             month: 'short',
             day: 'numeric',
             year: 'numeric',
