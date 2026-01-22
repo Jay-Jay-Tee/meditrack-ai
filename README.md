@@ -548,4 +548,30 @@ This project addresses real pain points in healthcare record management, inspire
 
 ---
 
+## ⚠️ Scope & Medical Disclaimer
+
+Medical Timeline AI is an **information retrieval and summarization system**, not a diagnostic or decision-making tool.  
+All AI-generated outputs are derived strictly from stored patient events and are intended to **assist human understanding**, not replace professional medical judgment.
+
+This system:
+- ❌ Does **not** diagnose conditions
+- ❌ Does **not** recommend treatments
+- ❌ Does **not** perform causal or clinical inference
+
+Clinicians and users must independently verify all information.
+
+---
+
+## 📌 Current Limitations
+
+The following features are **intentionally out of scope** for the current implementation and represent future extensions:
+
+- Explicit causal inference between events (e.g., medication → lab outcome)
+- Formal citation tagging for individual AI-generated statements
+- Role-based access control (RBAC) and audit logging
+- Image/audio semantic embeddings (current support is text and documents)
+- Regulatory compliance enforcement (HIPAA/GDPR layers)
+
+These limitations do **not** affect core timeline storage, semantic search, or reporting functionality.
+
 **Made with ❤️ for better healthcare**
