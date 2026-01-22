@@ -31,7 +31,7 @@
 ```bash
 # 1. Clone repository
 git clone <your-repo>
-cd medical-timeline-ai
+cd meditrack-ai
 
 # 2. Create virtual environment
 python -m venv venv
