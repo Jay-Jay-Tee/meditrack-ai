@@ -1,25 +1,25 @@
-# 🩺 MediTrack - AI-Powered Medical Timeline System
-### ☀️ Deployed at: https://medical-timeline-ai.onrender.com/
+# MediTrack - AI-Powered Medical Timeline System
+### Deployed at: https://medical-timeline-ai.onrender.com/
 ---
-## 🏆 Revolutionary Healthcare Record Management
+## Revolutionary Healthcare Record Management
 
 ### What Makes This Game-Changing
 
-1. **🎤 Voice-to-Medical-Note** - Real-time speech-to-text with Web Speech API
-2. **📸 Smart Document Upload** - Upload lab reports and medical documents with preview
-3. **📥 Document Download** - Download any uploaded document anytime from timeline
-4. **📄 Professional PDF Export** - Doctor-ready medical reports in seconds
-5. **🌙 Beautiful Dark Mode** - Eye-friendly interface for all lighting conditions
-5. **🔗 Shareable Patient Links** - Secure, read-only profile sharing for healthcare providers
-6. **🔐 Secure Authentication** - Patient accounts with hospital associations
-7. **🧠 AI-Powered Analysis** - Timeline analysis with Groq Llama 3.3 70B
-8. **📊 Data Quality Metrics** - Intelligent assessment of medical record completeness
-9. **🏥 Multi-Hospital Support** - Perfect for coordinating care across facilities
-10. **🎨 Modern UI/UX** - Professional and polished
+1. **Voice-to-Medical-Note** - Real-time speech-to-text with Web Speech API
+2. **Smart Document Upload** - Upload lab reports and medical documents with preview
+3. **Document Download** - Download any uploaded document anytime from timeline
+4. **Professional PDF Export** - Doctor-ready medical reports in seconds
+5. **Beautiful Dark Mode** - Eye-friendly interface for all lighting conditions
+5. **Shareable Patient Links** - Secure, read-only profile sharing for healthcare providers
+6. **Secure Authentication** - Patient accounts with hospital associations
+7. **AI-Powered Analysis** - Timeline analysis with Groq Llama 3.3 70B
+8. **Data Quality Metrics** - Intelligent assessment of medical record completeness
+9. **Multi-Hospital Support** - Perfect for coordinating care across facilities
+10. **Modern UI/UX** - Professional and polished
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -67,7 +67,7 @@ python app.py
 
 ---
 
-## 💡 Demo Flow (Perfect for Presentations)
+## Demo Flow
 
 ### 1. Registration Demo (30 seconds)
 ```
@@ -113,20 +113,8 @@ python app.py
    - Semantic shift score
 ```
 
-### 5. Share & Export Demo (30 seconds)
-```
-1. Click "Share" → Link copied!
-2. Open link in new tab → Read-only view
-3. Click "Export PDF"
-4. Professional medical report downloads
-5. Open PDF → Print-ready format
-```
-
-**Total Demo Time: ~3 minutes**
-
----
-
-## 🏗️ Technical Architecture
+### 5. Share & Export Demo (30 se
+## Technical Architecture
 
 ### Backend Stack
 
@@ -150,16 +138,16 @@ python app.py
 
 ### Why This Stack?
 
-✅ **Fast** - No heavy frameworks slowing things down  
-✅ **Scalable** - Vector DB handles massive datasets  
-✅ **Accurate** - Semantic search > keyword matching  
-✅ **Modern** - Latest AI models and web technologies  
-✅ **Secure** - Industry-standard auth and encryption  
-✅ **Cost-Effective** - Free tiers available for all services  
+**Fast** - No heavy frameworks slowing things down  
+**Scalable** - Vector DB handles massive datasets  
+**Accurate** - Semantic search > keyword matching  
+**Modern** - Latest AI models and web technologies  
+**Secure** - Industry-standard auth and encryption  
+**Cost-Effective** - Free tiers available for all services  
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 medical-timeline-ai/
@@ -176,9 +164,9 @@ medical-timeline-ai/
 
 ---
 
-## 🎯 Key Features Explained
+## Key Features Explained
 
-### 1. Voice-to-Medical-Note 🎤
+### 1. Voice-to-Medical-Note
 
 **How it works:**
 - Uses browser's **Web Speech API** (Chrome/Edge recommended)
@@ -188,9 +176,9 @@ medical-timeline-ai/
 - Perfect for hands-free data entry during patient consultations
 
 **Browser Support:**
-- ✅ Chrome/Edge: Full support
-- ✅ Safari: Partial support
-- ❌ Firefox: Not supported yet
+- Chrome/Edge: Full support
+- Safari: Partial support
+- Firefox: Not supported yet
 
 **Usage Tips:**
 - Speak clearly and at normal pace
@@ -198,7 +186,7 @@ medical-timeline-ai/
 - Red pulsing button indicates active recording
 - Click again to stop recording
 
-### 2. Multi-Hospital Patient IDs 🏥
+### 2. Multi-Hospital Patient IDs
 
 **Problem Solved:**
 Traditional systems use hospital-specific IDs, making it impossible to track patients across facilities.
@@ -217,7 +205,7 @@ Primary care at "Memorial Clinic" → Same ID again
 All records unified in one timeline!
 ```
 
-### 3. Semantic Timeline Analysis 🧠
+### 3. Semantic Timeline Analysis
 
 **What is Semantic Search?**
 Instead of keyword matching, we use AI embeddings to understand *meaning*.
@@ -239,10 +227,10 @@ Semantic Search: Also finds "myocardial infarction",
 - Provides neutral, factual summary
 
 **What the AI Does NOT Do:**
-- ❌ Diagnose conditions
-- ❌ Suggest treatments
-- ❌ Make medical recommendations
-- ❌ Replace healthcare professionals
+- Diagnose conditions
+- Suggest treatments
+- Make medical recommendations
+- Replace healthcare professionals
 
 **Powered by Groq:**
 - Llama 3.3 70B model
@@ -250,7 +238,7 @@ Semantic Search: Also finds "myocardial infarction",
 - Free tier: 14,400 requests/day
 - No GPU required on your machine
 
-### 5. Professional PDF Export 📄
+### 5. Professional PDF Export
 
 **What's Included:**
 - Hospital letterhead-style header
@@ -269,7 +257,7 @@ Semantic Search: Also finds "myocardial infarction",
 - Patient handouts
 - Legal documentation
 
-### 6. Shareable Patient Links 🔗
+### 6. Shareable Patient Links
 
 **How It Works:**
 - Every patient gets unique URL: `/patient/MED-XXXXXXXX`
@@ -288,7 +276,7 @@ Semantic Search: Also finds "myocardial infarction",
 
 ---
 
-## 🔒 Security Features
+## Security Features
 
 ### Password Security
 - **bcrypt hashing** with automatic salt generation
@@ -312,7 +300,7 @@ Works seamlessly with production WSGI servers (Gunicorn + nginx) for HTTPS encry
 
 ---
 
-## 📊 API Endpoints
+## API Endpoints
 
 ### Authentication
 ```
@@ -339,23 +327,7 @@ GET /api/status      # Detailed system status
 
 ---
 
-## 🎨 UI/UX Design Philosophy
-
-### Not "AI-Generated Looking"
-
-We intentionally avoided:
-- ❌ Generic gradients everywhere
-- ❌ Overly rounded corners
-- ❌ Comic Sans-style fonts
-- ❌ Neon colors
-- ❌ Cluttered layouts
-
-Instead we use:
-- ✅ Professional color palette (blues, whites, subtle grays)
-- ✅ Consistent spacing and alignment
-- ✅ Clear visual hierarchy
-- ✅ Thoughtful animations (not distracting)
-- ✅ Medical-appropriate iconography (🩺💊🩸)
+## UI/UX Design Philosophy
 
 ### Accessibility
 
@@ -373,7 +345,7 @@ Instead we use:
 
 ---
 
-## 🚢 Deployment
+## Deployment
 
 ### Local Development
 ```bash
@@ -426,74 +398,74 @@ CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:5000", "--workers", "4"]
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ### Manual Testing Checklist
 
 #### Registration & Login
-- [ ] Can create new account
-- [ ] Receives unique Patient ID
-- [ ] Can log in with email/password
-- [ ] Can log out
-- [ ] Session persists across page refresh
+- Can create new account
+- Receives unique Patient ID
+- Can log in with email/password
+- Can log out
+- Session persists across page refresh
 
 #### Voice Input
-- [ ] Microphone permission requested
-- [ ] Real-time transcription works
-- [ ] Can stop recording
-- [ ] Text saves correctly
+- Microphone permission requested
+- Real-time transcription works
+- Can stop recording
+- Text saves correctly
 
 #### Document Upload
-- [ ] Drag-and-drop works
-- [ ] File preview displays
-- [ ] Can add notes
-- [ ] Document saves to timeline
+- Drag-and-drop works
+- File preview displays
+- Can add notes
+- Document saves to timeline
 
 #### Timeline Analysis
-- [ ] Shows all events in table
-- [ ] AI summary generates
-- [ ] Data quality assessed correctly
-- [ ] Semantic shift calculated
+- Shows all events in table
+- AI summary generates
+- Data quality assessed correctly
+- Semantic shift calculated
 
 #### PDF Export
-- [ ] PDF downloads successfully
-- [ ] All events included
-- [ ] Professional formatting
-- [ ] Printable
+- PDF downloads successfully
+- All events included
+- Professional formatting
+- Printable
 
 #### Sharing
-- [ ] Share link copies to clipboard
-- [ ] Public view loads correctly
-- [ ] Cannot edit from public view
+- Share link copies to clipboard
+- Public view loads correctly
+- Cannot edit from public view
 
 ---
 
-## 🔮 Future Enhancements
+## Future Enhancements
 
 ### Phase 2 (Next Sprint)
-- [ ] Mobile app (React Native)
-- [ ] Medication interaction checker
-- [ ] Appointment scheduling
-- [ ] Lab result visualization graphs
-- [ ] Multi-language support (100+ languages)
+- Mobile app (React Native)
+- Medication interaction checker
+- Appointment scheduling
+- Lab result visualization graphs
+- Multi-language support (100+ languages)
 
 ### Phase 3 (Long-term)
-- [ ] Wearable device integration (Fitbit, Apple Watch)
-- [ ] Telemedicine video calls
-- [ ] Family health history linking
-- [ ] Insurance claim automation
-- [ ] Blockchain for immutable records
-- [ ] Machine learning for health predictions
+- Wearable device integration (Fitbit, Apple Watch)
+- Telemedicine video calls
+- Family health history linking
+- Insurance claim automation
+- Blockchain for immutable records
+- Machine learning for health predictions
 
 ---
 
-## 📝 License
+## License
 
 MIT License - Free to use, modify, and distribute!
 
 ---
 
-## 🙏 Credits & Acknowledgments
+## Credits & Acknowledgments
 
 **Built with:**
 - [Qdrant](https://qdrant.tech/) - Vector Database
@@ -507,7 +479,7 @@ This project addresses real pain points in healthcare record management, inspire
 
 ---
 
-## 📞 Support & Contact
+## Support & Contact
 
 **Found a bug?**
 - Check TROUBLESHOOTING.md first
@@ -527,7 +499,7 @@ This project addresses real pain points in healthcare record management, inspire
 
 ---
 
-## 🎓 Learning Resources
+## Learning Resources
 
 **New to Vector Databases?**
 - [Qdrant Tutorial](https://qdrant.tech/documentation/tutorials/)
@@ -543,21 +515,21 @@ This project addresses real pain points in healthcare record management, inspire
 
 ---
 
-## ⚠️ Scope & Medical Disclaimer
+## Scope & Medical Disclaimer
 
 Medical Timeline AI is an **information retrieval and summarization system**, not a diagnostic or decision-making tool.  
 All AI-generated outputs are derived strictly from stored patient events and are intended to **assist human understanding**, not replace professional medical judgment.
 
 This system:
-- ❌ Does **not** diagnose conditions
-- ❌ Does **not** recommend treatments
-- ❌ Does **not** perform causal or clinical inference
+- Does **not** diagnose conditions
+- Does **not** recommend treatments
+- Does **not** perform causal or clinical inference
 
 Clinicians and users must independently verify all information.
 
 ---
 
-## 📌 Current Limitations
+## Current Limitations
 
 The following features are **intentionally out of scope** for the current implementation and represent future extensions:
 
