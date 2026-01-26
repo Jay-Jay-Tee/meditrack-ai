@@ -410,12 +410,6 @@ CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:5000", "--workers", "4"]
 
 ---
 
-## License
-
-MIT License - Free to use, modify, and distribute!
-
----
-
 ## Credits & Acknowledgments
 
 **Built with:**
@@ -491,6 +485,12 @@ The following features are **intentionally out of scope** for the current implem
 - Regulatory compliance enforcement (HIPAA/GDPR layers)
 
 These limitations do **not** affect core timeline storage, semantic search, or reporting functionality.
+
+---
+
+## License
+
+MIT License - Free to use, modify, and distribute!
 
 ---
 
