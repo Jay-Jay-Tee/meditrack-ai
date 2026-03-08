@@ -1,12 +1,12 @@
 <div align="center">
 
 ```
-╔╦╗╔═╗╔╦╗╦╔╦╗╦═╗╔═╗╔═╗╦╔═     ╔═╗╦
-║║║║╣  ║║║ ║ ╠╦╝╠═╣║  ╠╩╗  ─  ╠═╣║
-╩ ╩╚═╝═╩╝╩ ╩ ╩╚═╩ ╩╚═╝╩ ╩     ╩ ╩╩
+╔╦╗╔═╗╔╦╗╦╔╦╗╦═╗╔═╗╔═╗╦╔═ 
+║║║║╣  ║║║ ║ ╠╦╝╠═╣║  ╠╩╗ 
+╩ ╩╚═╝═╩╝╩ ╩ ╩╚═╩ ╩╚═╝╩ ╩ 
 ```
 
-**AI-Powered Medical Timeline System**
+**Vector-Database AI-Powered Medical Timeline System**
 
 [![Python](https://img.shields.io/badge/Python-3.8–3.13-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![Flask](https://img.shields.io/badge/Flask-3.x-000000?style=flat-square&logo=flask&logoColor=white)](https://flask.palletsprojects.com)
@@ -21,9 +21,9 @@
 
 ---
 
-## What is MediTrack-AI?
+## What is MediTrack?
 
-MediTrack-AI is a full-stack, AI-powered medical timeline system that lets patients own their health history across every hospital, clinic, and specialist they visit. Every event gets semantically embedded into a vector database, so when you ask about your care history, the system *understands* what you mean — not just what you typed.
+MediTrack is a full-stack, AI-powered medical timeline system that lets patients own their health history across every hospital, clinic, and specialist they visit. Every event gets semantically embedded into a vector database, so when you ask about your care history, the system *understands* what you mean — not just what you typed.
 
 One patient. One ID. Every record. Everywhere.
 
@@ -33,7 +33,7 @@ One patient. One ID. Every record. Everywhere.
 
 Healthcare is fragmented. You visit City Hospital, then County Emergency, then your specialist across town. Each institution has its own siloed records. You, the patient, are left carrying printed PDFs in a folder.
 
-MediTrack-AI fixes this with a **globally unique Patient ID** (`MED-XXXXXXXX`) that travels with you. All events — voice-dictated notes, uploaded lab reports, typed summaries — are stored in a single semantic timeline that any authorized provider can view through a shareable read-only link.
+MediTrack fixes this with a **globally unique Patient ID** (`MED-XXXXXXXX`) that travels with you. All events — voice-dictated notes, uploaded lab reports, typed summaries — are stored in a single semantic timeline that any authorized provider can view through a shareable read-only link.
 
 ---
 
@@ -115,7 +115,7 @@ Eye-friendly interface with full dark/light toggle. Designed for late-night ER n
 ## Project Structure
 
 ```
-medical-timeline-ai/
+meditrack/
 ├── app.py                    # Flask backend — all routes and business logic
 ├── requirements.txt          # Python dependencies
 ├── .env                      # Environment variables (never commit this)
@@ -144,8 +144,8 @@ medical-timeline-ai/
 
 ```bash
 # 1. Clone
-git clone https://github.com/your-org/medical-timeline-ai.git
-cd medical-timeline-ai
+git clone https://github.com/your-org/meditrack.git
+cd meditrack
 
 # 2. Virtual environment
 python -m venv venv
@@ -225,7 +225,7 @@ SECRET_KEY=run: python -c "import secrets; print(secrets.token_hex(32))"
 
 ## How the AI Works
 
-MediTrack-AI uses **two layers of AI**:
+MediTrack uses **two layers of AI**:
 
 **Layer 1 — Semantic Embeddings (FastEmbed)**
 When you save a medical event, the text is converted into a 384-dimensional vector and stored in Qdrant. This enables semantic search — queries find *conceptually related* records, not just exact keyword matches.
@@ -288,8 +288,8 @@ CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:5000", "--workers", "4", "--timeo
 ```
 
 ```bash
-docker build -t meditrack-ai .
-docker run -p 5000:5000 --env-file .env meditrack-ai
+docker build -t meditrack .
+docker run -p 5000:5000 --env-file .env meditrack
 ```
 
 ### Render (as deployed)
@@ -333,7 +333,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) if you want to help build any of these.
 
 ## Medical Disclaimer
 
-MediTrack-AI is an **information retrieval and summarization system**, not a diagnostic or clinical decision-support tool. All AI-generated outputs are derived strictly from stored patient events and are intended to assist human understanding, not replace professional medical judgment.
+MediTrack is an **information retrieval and summarization system**, not a diagnostic or clinical decision-support tool. All AI-generated outputs are derived strictly from stored patient events and are intended to assist human understanding, not replace professional medical judgment.
 
 Always consult a licensed healthcare provider for medical decisions.
 
@@ -347,7 +347,7 @@ MIT — free to use, modify, and distribute. See [LICENSE](LICENSE).
 
 <div align="center">
 
-Built for patients to own their own story.
+Built for patients who deserve to own their own story.
 
 **[Live Demo](https://medical-timeline-ai.onrender.com) · [Report a Bug](../../issues) · [Request a Feature](../../issues) · [Security Policy](SECURITY.md)**
 
