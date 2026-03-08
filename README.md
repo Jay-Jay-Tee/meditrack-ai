@@ -1,100 +1,114 @@
-# MediTrack-AI - AI Powered Medical Timeline System
-### Deployed at: https://medical-timeline-ai.onrender.com/
----
-## Revolutionary Healthcare Record Management
+<div align="center">
 
-### What Makes This Game-Changing
-
-1. **Voice-to-Medical-Note** - Real-time speech-to-text with Web Speech API
-2. **Smart Document Upload** - Upload lab reports and medical documents with preview
-3. **Document Download** - Download any uploaded document anytime from timeline
-4. **Professional PDF Export** - Doctor-ready medical reports in seconds
-5. **Beautiful Dark Mode** - Eye-friendly interface for all lighting conditions
-5. **Shareable Patient Links** - Secure, read-only profile sharing for healthcare providers
-6. **Secure Authentication** - Patient accounts with hospital associations
-7. **AI-Powered Analysis** - Timeline analysis with Groq Llama 3.3 70B
-8. **Data Quality Metrics** - Intelligent assessment of medical record completeness
-9. **Multi-Hospital Support** - Perfect for coordinating care across facilities
-10. **Modern UI/UX** - Professional and polished
-
----
-
-## Quick Start
-
-### Prerequisites
-
-- **Python 3.8-3.13**
-- **Qdrant Vector Database** (cloud or local)
-- **Groq API Key** (free tier available)
-
-### Installation
-
-```bash
-# 1. Clone repository
-git clone <your-repo>
-cd meditrack-ai
-
-# 2. Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Create .env file with your credentials
-cat > .env << EOF
-QDRANT_URL=your_qdrant_url
-QDRANT_API_KEY=your_qdrant_api_key
-GROQ_API_KEY=your_groq_api_key
-SECRET_KEY=$(python -c "import secrets; print(secrets.token_hex(32))")
-EOF
-
-# 5. Run the application
-python app.py
+```
+╔╦╗╔═╗╔╦╗╦╔╦╗╦═╗╔═╗╔═╗╦╔═     ╔═╗╦
+║║║║╣  ║║║ ║ ╠╦╝╠═╣║  ╠╩╗  ─  ╠═╣║
+╩ ╩╚═╝═╩╝╩ ╩ ╩╚═╩ ╩╚═╝╩ ╩     ╩ ╩╩
 ```
 
-### First Time Setup
+**AI-Powered Medical Timeline System**
 
-1. Open `http://localhost:5000` in your browser
-2. Click **"Sign In"** → **"Create Account"**
-3. Fill in:
-   - Your full name
-   - Hospital name (e.g., "City General Hospital")
-   - Email address
-   - Secure password
-4. You'll receive a **unique Patient ID** (e.g., `MED-ABC12345`)
-5. Start adding medical events!
+[![Python](https://img.shields.io/badge/Python-3.8–3.13-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
+[![Flask](https://img.shields.io/badge/Flask-3.x-000000?style=flat-square&logo=flask&logoColor=white)](https://flask.palletsprojects.com)
+[![Qdrant](https://img.shields.io/badge/Qdrant-Vector_DB-DC244C?style=flat-square)](https://qdrant.tech)
+[![Groq](https://img.shields.io/badge/Groq-Llama_3.3_70B-F55036?style=flat-square)](https://groq.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Render-46E3B7?style=flat-square)](https://medical-timeline-ai.onrender.com/)
+
+*Healthcare records that actually follow the patient — not the hospital.*
+
+</div>
 
 ---
 
-### Backend Stack
+## What is MediTrack-AI?
 
-- **Flask** - Python web framework (lightweight, production-ready)
-- **Qdrant** - Vector database for semantic search
-  - 384-dimensional embeddings
-  - Cosine similarity for semantic matching
-  - Scales to millions of records
-- **FastEmbed** - Fast text embeddings (no GPU required)
-- **Groq Llama 3.3 70B** - AI analysis (fastest inference available)
-- **ReportLab** - Professional PDF generation
-- **bcrypt** - Secure password hashing
-- **Flask-Login** - Session management
+MediTrack-AI is a full-stack, AI-powered medical timeline system that lets patients own their health history across every hospital, clinic, and specialist they visit. Every event gets semantically embedded into a vector database, so when you ask about your care history, the system *understands* what you mean — not just what you typed.
 
-### Frontend Stack
+One patient. One ID. Every record. Everywhere.
 
-- **Vanilla JavaScript** - No framework bloat, maximum performance
-- **Tailwind CSS** - Modern utility-first styling
-- **Web Speech API** - Built-in browser voice recognition
-- **Drag & Drop API** - Native file upload handling
+---
 
-### Why This Stack?
+## The Problem It Solves
 
-**Fast** - No heavy frameworks slowing things down  
-**Scalable** - Vector DB handles massive datasets  
-**Accurate** - Semantic search > keyword matching  
-**Modern** - Latest AI models and web technologies  
-**Secure** - Industry-standard auth and encryption  
-**Cost-Effective** - Free tiers available for all services  
+Healthcare is fragmented. You visit City Hospital, then County Emergency, then your specialist across town. Each institution has its own siloed records. You, the patient, are left carrying printed PDFs in a folder.
+
+MediTrack-AI fixes this with a **globally unique Patient ID** (`MED-XXXXXXXX`) that travels with you. All events — voice-dictated notes, uploaded lab reports, typed summaries — are stored in a single semantic timeline that any authorized provider can view through a shareable read-only link.
+
+---
+
+## Core Features
+
+### 🎙️ Voice-to-Medical-Note
+Dictate clinical notes hands-free using the browser's Web Speech API. Real-time transcription. Zero backend processing. Works in Chrome and Edge today.
+
+### 🔍 Semantic Timeline Search
+Built on Qdrant with 384-dimensional FastEmbed vectors and cosine similarity. Searching "heart problem" will surface entries for "myocardial infarction," "MI," and "cardiac event" — because it understands meaning, not just keywords.
+
+### 🤖 AI-Powered Analysis
+Groq's Llama 3.3 70B (fastest inference available at ~500 tokens/sec) reads your entire timeline and produces a professional clinical summary — patterns, gaps, visit frequency — without ever making a diagnosis or treatment suggestion.
+
+### 📄 Professional PDF Export
+ReportLab-generated reports styled with hospital letterhead formatting. Includes a complete event table with dates, types, and content. Print-ready for specialist referrals, insurance claims, or legal documentation.
+
+### 🔗 Shareable Patient Links
+Every patient gets a public read-only URL (`/patient/MED-XXXXXXXX`). Share with your cardiologist before your appointment. No login required to view. No ability to edit.
+
+### 📁 Document Upload & Download
+Drag-and-drop lab reports, imaging results, or discharge summaries. Files persist on disk with UUID-named storage. Full download access from the timeline at any time.
+
+### 🌙 Dark Mode
+Eye-friendly interface with full dark/light toggle. Designed for late-night ER nurses and 6 AM rounds.
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        Browser (Vanilla JS + Tailwind)       │
+│   ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
+│   │  index.html  │  │patient_view  │  │     app.js       │  │
+│   │  (main UI)   │  │  (read-only) │  │  (API client)    │  │
+│   └──────────────┘  └──────────────┘  └──────────────────┘  │
+└─────────────────────────────┬───────────────────────────────┘
+                              │ HTTP/REST
+┌─────────────────────────────▼───────────────────────────────┐
+│                        Flask Backend (app.py)                │
+│   ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
+│   │  Auth Layer  │  │  API Routes  │  │  PDF Generator   │  │
+│   │  (bcrypt +   │  │  (ingest,    │  │  (ReportLab)     │  │
+│   │  Flask-Login)│  │  timeline,   │  │                  │  │
+│   └──────────────┘  │  export)     │  └──────────────────┘  │
+│                     └──────┬───────┘                         │
+└────────────────────────────┼────────────────────────────────┘
+                             │
+         ┌───────────────────┼───────────────────┐
+         │                   │                   │
+┌────────▼────────┐  ┌───────▼───────┐  ┌───────▼────────┐
+│     Qdrant      │  │   FastEmbed   │  │  Groq Llama    │
+│  (Vector DB)    │  │  (Embeddings  │  │  3.3 70B       │
+│  384-dim cosine │  │  384-dim CPU) │  │  (AI Analysis) │
+└─────────────────┘  └───────────────┘  └────────────────┘
+```
+
+---
+
+## Tech Stack
+
+**Backend**
+- [Flask](https://flask.palletsprojects.com) — Python web framework
+- [Qdrant](https://qdrant.tech) — Vector database (cloud or local)
+- [FastEmbed](https://github.com/qdrant/fastembed) — CPU-only 384-dim text embeddings
+- [Groq](https://groq.com) — LLM inference (Llama 3.3 70B)
+- [ReportLab](https://www.reportlab.com) — PDF generation
+- [bcrypt](https://pypi.org/project/bcrypt/) + [Flask-Login](https://flask-login.readthedocs.io) — Auth
+
+**Frontend**
+- Vanilla JavaScript — no framework overhead
+- [Tailwind CSS](https://tailwindcss.com) — utility-first styling
+- Web Speech API — browser-native voice input
+- Drag & Drop API — native file handling
 
 ---
 
@@ -102,396 +116,239 @@ python app.py
 
 ```
 medical-timeline-ai/
-├── app.py                    # Main Flask backend
+├── app.py                    # Flask backend — all routes and business logic
 ├── requirements.txt          # Python dependencies
-├── .env                      # Environment variables (create this!)
+├── .env                      # Environment variables (never commit this)
 ├── static/
-│   ├── index.html           # Main application UI
-│   ├── patient_view.html    # Public patient timeline view
-│   └── app.js               # Frontend JavaScript logic
-├── README.md                # This file
-└── TROUBLESHOOTING.md       # Debug guide
+│   ├── index.html            # Main application UI
+│   ├── patient_view.html     # Public patient timeline (read-only)
+│   └── app.js                # Frontend JavaScript
+├── uploads/                  # Uploaded documents (auto-created on first run)
+├── README.md                 # This file
+├── CONTRIBUTING.md           # How to contribute
+├── SECURITY.md               # Vulnerability disclosure policy
+└── TROUBLESHOOTING.md        # Debug guide
 ```
 
 ---
 
-## Key Features Explained
+## Quick Start
 
-### 1. Voice-to-Medical-Note
+### Prerequisites
 
-**How it works:**
-- Uses browser's **Web Speech API** (Chrome/Edge recommended)
-- Real-time transcription as you speak
-- No backend processing needed - runs entirely in browser
-- Automatically detects pauses and punctuation
-- Perfect for hands-free data entry during patient consultations
+- Python 3.8–3.13 (3.11 recommended)
+- A [Qdrant](https://cloud.qdrant.io) account (free tier works)
+- A [Groq](https://console.groq.com/keys) API key (free tier: 14,400 req/day)
 
-**Browser Support:**
-- Chrome/Edge: Full support
-- Safari: Partial support
-- Firefox: Not supported yet
+### Installation
 
-**Usage Tips:**
-- Speak clearly and at normal pace
-- Browser will ask for microphone permission (allow it)
-- Red pulsing button indicates active recording
-- Click again to stop recording
+```bash
+# 1. Clone
+git clone https://github.com/your-org/medical-timeline-ai.git
+cd medical-timeline-ai
 
-### 2. Multi-Hospital Patient IDs
+# 2. Virtual environment
+python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
 
-**Problem Solved:**
-Traditional systems use hospital-specific IDs, making it impossible to track patients across facilities.
+# 3. Dependencies
+pip install -r requirements.txt
 
-**Our Solution:**
-- Every user gets a **globally unique ID** (format: `MED-XXXXXXXX`)
-- Hospital name stored with each record
-- Patients can visit multiple hospitals using same ID
-- Easy coordination of care between facilities
+# 4. Environment variables
+cp .env.example .env
+# Edit .env with your credentials (see below)
 
-**Example Workflow:**
-```
-Patient registers: MED-A1B2C3D4 at "City Hospital"
-Visits emergency room at "County Hospital" → Uses same ID
-Primary care at "Memorial Clinic" → Same ID again
-All records unified in one timeline!
+# 5. Run
+python app.py
+# → http://localhost:5000
 ```
 
-### 3. Semantic Timeline Analysis
+### Environment Variables
 
-**What is Semantic Search?**
-Instead of keyword matching, we use AI embeddings to understand *meaning*.
+Create a `.env` file in the project root:
 
-**Example:**
+```env
+# Qdrant Vector Database
+QDRANT_URL=https://your-cluster.cloud.qdrant.io:6333
+QDRANT_API_KEY=your_qdrant_api_key
+
+# Groq AI
+GROQ_API_KEY=gsk_your_groq_api_key
+
+# Flask session security (generate once, keep secret)
+SECRET_KEY=run: python -c "import secrets; print(secrets.token_hex(32))"
 ```
-Traditional Search: "heart attack" only finds exact phrase
-Semantic Search: Also finds "myocardial infarction", 
-                  "cardiac arrest", "MI", etc.
-```
 
-### 4. AI-Powered Insights
+> ⚠️ **Never commit your `.env` file.** It's already in `.gitignore`.
 
-**What the AI Does:**
-- Analyzes complete medical timeline
-- Identifies patterns and trends
-- Describes frequency of visits
-- Notes temporal gaps or clusters
-- Provides neutral, factual summary
+### First Run
 
-**What the AI Does NOT Do:**
-- Diagnose conditions
-- Suggest treatments
-- Make medical recommendations
-- Replace healthcare professionals
-
-**Powered by Groq:**
-- Llama 3.3 70B model
-- Fastest AI inference available (~500 tokens/second)
-- Free tier: 14,400 requests/day
-- No GPU required on your machine
-
-### 5. Professional PDF Export
-
-**What's Included:**
-- Hospital letterhead-style header
-- Patient ID and generation timestamp
-- Complete timeline table with:
-  - Dates formatted professionally
-  - Event types color-coded
-  - Full content of each event
-- Print-optimized layout
-- HIPAA-style formatting
-
-**Perfect For:**
-- Specialist referrals
-- Insurance claims
-- Medical record requests
-- Patient handouts
-- Legal documentation
-
-### 6. Shareable Patient Links
-
-**How It Works:**
-- Every patient gets unique URL: `/patient/MED-XXXXXXXX`
-- Read-only view - cannot edit or add records
-- No login required to view
-- Perfect for sharing with:
-  - Doctors
-  - Specialists
-  - Family members
-  - Insurance companies
-
-**Security:**
-- URL is the only "password" (security through obscurity)
-- No sensitive data visible without the link
-- Can be revoked by changing Patient ID (future feature)
+1. Open `http://localhost:5000`
+2. Click **Sign In → Create Account**
+3. Enter your name, hospital, email, and password
+4. You'll receive a **Patient ID** like `MED-A1B2C3D4`
+5. Start adding events — voice, text, or file upload
 
 ---
 
-## Security Features
-
-### Password Security
-- **bcrypt hashing** with automatic salt generation
-- Passwords never stored in plain text
-- Industry-standard algorithm (used by GitHub, Google, etc.)
-
-### Session Management
-- **Flask-Login** for secure sessions
-- HTTPOnly cookies prevent XSS attacks
-- CSRF protection enabled
-- Automatic session expiration
-
-### Data Protection
-- All API calls require authentication
-- Patient data isolated by Patient ID
-- No SQL injection risk (using NoSQL vector database)
-- Input sanitization on all fields
-
-### HTTPS Ready
-Works seamlessly with production WSGI servers (Gunicorn + nginx) for HTTPS encryption.
-
----
-
-## API Endpoints
+## API Reference
 
 ### Authentication
-```
-POST /register       # Create new account
-POST /login          # Sign in
-POST /logout         # Sign out
-GET  /me             # Get current user info
-```
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/register` | Create a new patient account |
+| `POST` | `/login` | Authenticate and start session |
+| `POST` | `/logout` | End session |
+| `GET` | `/me` | Get current user info |
+| `POST` | `/update-profile` | Update patient profile fields |
 
 ### Medical Records
-```
-POST /ingest              # Add text-based medical event
-POST /upload-document     # Upload document with notes
-POST /timeline-summary    # Get complete timeline + AI analysis
-POST /export-pdf          # Generate PDF report
-```
 
-### Public Access
-```
-GET /patient/<id>    # Public read-only timeline view
-GET /health          # Health check
-GET /api/status      # Detailed system status
-```
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/ingest` | Add a text-based medical event |
+| `POST` | `/upload-document` | Upload a file with optional notes |
+| `GET` | `/download-document/<filename>` | Download an uploaded document |
+| `POST` | `/timeline-summary` | Fetch full timeline + AI analysis |
+| `POST` | `/export-pdf` | Generate and download PDF report |
+
+### Public & Status
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/patient/<id>` | Read-only public timeline view |
+| `GET` | `/health` | Component health check |
+| `GET` | `/api/status` | Detailed system status |
 
 ---
 
-## UI/UX Design Philosophy
+## How the AI Works
 
-### Accessibility
+MediTrack-AI uses **two layers of AI**:
 
-- **High contrast** - Text readable in all lighting
-- **Keyboard navigation** - All features accessible via keyboard
-- **Screen reader friendly** - Semantic HTML
-- **Dark mode** - Reduces eye strain for night shifts
+**Layer 1 — Semantic Embeddings (FastEmbed)**
+When you save a medical event, the text is converted into a 384-dimensional vector and stored in Qdrant. This enables semantic search — queries find *conceptually related* records, not just exact keyword matches.
 
-### Responsive Design
+**Layer 2 — LLM Summary (Groq Llama 3.3 70B)**
+When you request a timeline analysis, all your events are assembled into a structured prompt and sent to Llama 3.3 70B. The model produces a professional clinical narrative describing patterns, visit frequency, and temporal gaps.
 
-- **Mobile** - Full functionality on phones
-- **Tablet** - Optimized for iPad/Android tablets
-- **Desktop** - Takes advantage of large screens
-- **Print** - Optimized for printing timelines
+**What the AI explicitly does NOT do:**
+- Diagnose conditions
+- Suggest treatments or medications
+- Perform clinical inference between events
+- Replace healthcare professionals
+
+All outputs are clearly labeled as *information summaries*, not clinical recommendations.
 
 ---
 
 ## Deployment
 
-### Local Development
+### Local Dev
+
 ```bash
 python app.py
-# Access at http://localhost:5000
+# → http://localhost:5000 with debug mode enabled
 ```
 
-### Production with Gunicorn
+### Production (Gunicorn + nginx)
+
 ```bash
 pip install gunicorn
 gunicorn app:app --bind 0.0.0.0:8000 --workers 4 --timeout 120
 ```
 
-### Production with nginx (Recommended)
+nginx config:
+
 ```nginx
 server {
     listen 80;
-    server_name medtimeline.example.com;
-    
+    server_name yourdomain.com;
+
     location / {
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
 }
 ```
 
-### Environment Variables for Production
-```bash
-# Required
-QDRANT_URL=https://your-qdrant-instance.com
-QDRANT_API_KEY=your_production_key
-GROQ_API_KEY=your_production_key
-SECRET_KEY=$(python -c "import secrets; print(secrets.token_hex(32))")
+### Docker
 
-# Optional
-FLASK_ENV=production
-WORKERS=4
-```
-
-### Docker Deployment (Optional)
 ```dockerfile
 FROM python:3.11-slim
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
-CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:5000", "--workers", "4"]
+EXPOSE 5000
+CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:5000", "--workers", "4", "--timeout", "120"]
 ```
 
----
+```bash
+docker build -t meditrack-ai .
+docker run -p 5000:5000 --env-file .env meditrack-ai
+```
 
-## Testing
+### Render (as deployed)
 
-### Manual Testing Checklist
-
-#### Registration & Login
-- Can create new account
-- Receives unique Patient ID
-- Can log in with email/password
-- Can log out
-- Session persists across page refresh
-
-#### Voice Input
-- Microphone permission requested
-- Real-time transcription works
-- Can stop recording
-- Text saves correctly
-
-#### Document Upload
-- Drag-and-drop works
-- File preview displays
-- Can add notes
-- Document saves to timeline
-
-#### Timeline Analysis
-- Shows all events in table
-- AI summary generates
-- Data quality assessed correctly
-- Semantic shift calculated
-
-#### PDF Export
-- PDF downloads successfully
-- All events included
-- Professional formatting
-- Printable
-
-#### Sharing
-- Share link copies to clipboard
-- Public view loads correctly
-- Cannot edit from public view
+1. Connect repo to [Render](https://render.com)
+2. Set build command: `pip install -r requirements.txt`
+3. Set start command: `gunicorn app:app`
+4. Add environment variables in Render's dashboard
+5. Done — live at your Render URL
 
 ---
 
-## Future Enhancements
+## Browser Compatibility
 
-### Phase 2 (Next Sprint)
-- Mobile app (React Native)
-- Medication interaction checker
-- Appointment scheduling
-- Lab result visualization graphs
-- Multi-language support (100+ languages)
+| Feature | Chrome | Edge | Safari | Firefox |
+|---------|--------|------|--------|---------|
+| Core app | ✅ | ✅ | ✅ | ✅ |
+| Voice input | ✅ | ✅ | ⚠️ Partial | ❌ |
+| File upload | ✅ | ✅ | ✅ | ✅ |
+| PDF export | ✅ | ✅ | ✅ | ✅ |
+| Dark mode | ✅ | ✅ | ✅ | ✅ |
 
-### Phase 3 (Long-term)
-- Wearable device integration (Fitbit, Apple Watch)
-- Telemedicine video calls
-- Family health history linking
-- Insurance claim automation
-- Blockchain for immutable records
-- Machine learning for health predictions
+Voice input requires HTTPS in production. Works on `localhost` without HTTPS for development.
 
 ---
 
-## Credits & Acknowledgments
+## Known Limitations
 
-**Built with:**
-- [Qdrant](https://qdrant.tech/) - Vector Database
-- [Groq](https://groq.com/) - AI Inference
-- [FastEmbed](https://github.com/qdrant/fastembed) - Text Embeddings
-- [Tailwind CSS](https://tailwindcss.com/) - Styling
-- [ReportLab](https://www.reportlab.com/) - PDF Generation
+The following are intentionally out of scope for the current version:
 
-**Inspiration:**
-This project addresses real pain points in healthcare record management, inspired by the challenges patients face coordinating care across multiple providers and institutions.
-
----
-
-## Support & Contact
-
-**Found a bug?**
-- Check TROUBLESHOOTING.md first
-- Open an issue on GitHub
-- Include error messages and steps to reproduce
-
-**Questions?**
-- Read the inline code comments
-- Check the API documentation above
-- Review the troubleshooting guide
-
-**Want to contribute?**
-- Fork the repository
-- Create a feature branch
-- Submit a pull request
-- We welcome contributions!
-
----
-
-## Learning Resources
-
-**New to Vector Databases?**
-- [Qdrant Tutorial](https://qdrant.tech/documentation/tutorials/)
-- [Understanding Embeddings](https://platform.openai.com/docs/guides/embeddings)
-
-**Want to Learn More About AI?**
-- [Groq Documentation](https://console.groq.com/docs)
-- [Llama Model Details](https://www.llama.com/)
-
-**Flask Development:**
-- [Flask Mega-Tutorial](https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-i-hello-world)
-- [Flask-Login Docs](https://flask-login.readthedocs.io/)
-
----
-
-## Scope & Medical Disclaimer
-
-Medical Timeline AI is an **information retrieval and summarization system**, not a diagnostic or decision-making tool.  
-All AI-generated outputs are derived strictly from stored patient events and are intended to **assist human understanding**, not replace professional medical judgment.
-
-This system:
-- Does **not** diagnose conditions
-- Does **not** recommend treatments
-- Does **not** perform causal or clinical inference
-
-Clinicians and users must independently verify all information.
-
----
-
-## Current Limitations
-
-The following features are **intentionally out of scope** for the current implementation and represent future extensions:
-
-- Explicit causal inference between events (e.g., medication → lab outcome)
-- Formal citation tagging for individual AI-generated statements
+- Causal inference between events (e.g., "medication X caused lab result Y")
 - Role-based access control (RBAC) and audit logging
-- Image/audio semantic embeddings (current support is text and documents)
-- Regulatory compliance enforcement (HIPAA/GDPR layers)
+- HIPAA/GDPR compliance layers
+- Image or audio semantic embeddings (text and documents only)
+- Persistent sessions across server restarts (in-memory user store)
+- Patient ID revocation / link invalidation
 
-These limitations do **not** affect core timeline storage, semantic search, or reporting functionality.
+See [CONTRIBUTING.md](CONTRIBUTING.md) if you want to help build any of these.
+
+---
+
+## Medical Disclaimer
+
+MediTrack-AI is an **information retrieval and summarization system**, not a diagnostic or clinical decision-support tool. All AI-generated outputs are derived strictly from stored patient events and are intended to assist human understanding, not replace professional medical judgment.
+
+Always consult a licensed healthcare provider for medical decisions.
 
 ---
 
 ## License
 
-MIT License - Free to use, modify, and distribute!
+MIT — free to use, modify, and distribute. See [LICENSE](LICENSE).
 
 ---
 
-**Made with ❤️ for better healthcare**
+<div align="center">
+
+Built for patients to own their own story.
+
+**[Live Demo](https://medical-timeline-ai.onrender.com) · [Report a Bug](../../issues) · [Request a Feature](../../issues) · [Security Policy](SECURITY.md)**
+
+</div>
